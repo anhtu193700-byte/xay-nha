@@ -3,58 +3,64 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>Giúp Lão Xây Nhà — TikTok Live</title>
+  <title>Giúp Lão Xây Nhà — Live Tương Tác</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
   <style>
-    /* =========================================================================
-       1. NỀN TỔNG THỂ & KHUNG DỌC CHUẨN 9:16 (CSS NỘI TUYẾN)
-       ========================================================================= */
+    /* Thiết lập chuẩn 9:16 di động, chống tràn cuộn ngang và khóa chọn văn bản khi thao tác nhanh */
     *, *::before, *::after {
       box-sizing: border-box;
-      margin: 0;
-      padding: 0;
       -webkit-tap-highlight-color: transparent;
     }
 
     html, body {
+      margin: 0;
+      padding: 0;
       width: 100%;
+      max-width: 100vw;
       height: 100dvh;
-      min-height: 100vh;
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background-color: #0b0907;
+      color: #ffffff;
       overflow: hidden;
-      background: radial-gradient(circle at 50% 25%, #2d1d10 0%, #140c06 72%, #080503 100%);
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-      color: #fffbeb;
       user-select: none;
     }
 
-    .app-viewport {
+    .live-stage-wrap {
+      position: relative;
       width: 100%;
+      max-width: 100vw;
       height: 100dvh;
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 0;
+      background: radial-gradient(circle at 50% 35%, #2b2015 0%, #110d09 68%, #070504 100%);
+      overflow: hidden;
     }
 
-    .phone-frame {
+    .live-phone-box {
       position: relative;
       width: 100%;
-      max-width: 440px;
+      max-width: 450px;
       height: 100dvh;
+      max-height: 100dvh;
       overflow: hidden;
-      background: #87ceeb;
-      box-shadow: 0 24px 64px rgba(0, 0, 0, 0.85);
+      background: #c5a16d;
+      box-shadow: 0 24px 68px rgba(0, 0, 0, 0.82);
     }
 
-    @media (min-width: 600px) {
-      .phone-frame {
-        height: min(96dvh, 840px);
+    @media (min-width: 641px) {
+      .live-phone-box {
+        height: min(100dvh, 844px);
         aspect-ratio: 9 / 16;
-        border-radius: 26px;
-        border: 2px solid rgba(251, 191, 36, 0.35);
+        border-radius: 28px;
+        border: 2px solid rgba(250, 204, 21, 0.25);
       }
     }
 
-    #villageCanvas {
+    #gameCanvas {
       position: absolute;
       inset: 0;
       width: 100%;
@@ -63,7 +69,7 @@
       z-index: 1;
     }
 
-    .hud-overlay {
+    .hud-layer {
       position: relative;
       z-index: 10;
       width: 100%;
@@ -71,688 +77,444 @@
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      padding: 10px 10px 12px;
       pointer-events: none;
+      overflow: hidden;
     }
 
-    .wood-panel {
-      background: linear-gradient(180deg, rgba(66, 38, 17, 0.93) 0%, rgba(36, 20, 8, 0.96) 100%);
-      border: 1.5px solid rgba(245, 194, 107, 0.65);
-      box-shadow: inset 0 1px 0 rgba(255, 241, 194, 0.25), 0 6px 18px rgba(0, 0, 0, 0.52);
-      backdrop-filter: blur(4px);
+    .wood-card {
+      background: linear-gradient(180deg, rgba(61, 37, 17, 0.92) 0%, rgba(35, 20, 9, 0.96) 100%);
+      border: 1.5px solid rgba(240, 198, 122, 0.58);
+      box-shadow: inset 0 1px 0 rgba(255, 238, 195, 0.24), 0 6px 16px rgba(0, 0, 0, 0.52);
     }
 
-    .stroke-shadow {
+    .text-stroke-dark {
       text-shadow:
-        -1.2px -1.2px 0 #1c1108,
-         1.2px -1.2px 0 #1c1108,
-        -1.2px  1.2px 0 #1c1108,
-         1.2px  1.2px 0 #1c1108,
-         0 2px 6px rgba(0, 0, 0, 0.8);
+        -1.5px -1.5px 0 #1b1107,
+         1.5px -1.5px 0 #1b1107,
+        -1.5px  1.5px 0 #1b1107,
+         1.5px  1.5px 0 #1b1107,
+         0 3px 8px rgba(0, 0, 0, 0.72);
     }
 
-    /* =========================================================================
-       2. THANH TIẾN ĐỘ XÂY NHÀ 5 CẤP (1 = 100 XÂY NHÀ, KHÔNG CHỮ "XU")
-       ========================================================================= */
-    .top-bar {
-      pointer-events: auto;
-      border-radius: 16px;
-      padding: 9px 12px;
+    .thin-scroll::-webkit-scrollbar {
+      width: 3px;
     }
-
-    .top-header-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 6px;
-      margin-bottom: 5px;
-    }
-
-    .game-title {
-      font-size: 14px;
-      font-weight: 900;
-      color: #fde68a;
-    }
-
-    .level-badge {
-      padding: 2px 9px;
+    .thin-scroll::-webkit-scrollbar-track {
+      background: rgba(0, 0, 0, 0.22);
       border-radius: 999px;
-      background: linear-gradient(90deg, #b45309, #d97706);
-      border: 1px solid rgba(254, 243, 199, 0.65);
-      font-size: 11px;
-      font-weight: 900;
-      color: #fffbeb;
     }
-
-    .score-display-row {
-      display: flex;
-      align-items: baseline;
-      justify-content: center;
-      gap: 6px;
-      margin-bottom: 5px;
-    }
-
-    .score-main {
-      font-size: 22px;
-      font-weight: 900;
-      color: #fcd34d;
-      line-height: 1.1;
-    }
-
-    .score-target {
-      font-size: 13px;
-      font-weight: 800;
-      color: #fef3c7;
-    }
-
-    .progress-track {
-      position: relative;
-      width: 100%;
-      height: 16px;
-      border-radius: 999px;
-      background: rgba(15, 10, 6, 0.85);
-      border: 1px solid rgba(252, 211, 77, 0.45);
-      overflow: hidden;
-    }
-
-    .progress-fill {
-      height: 100%;
-      width: 0%;
-      border-radius: 999px;
-      background: linear-gradient(90deg, #f59e0b 0%, #facc15 55%, #fef08a 100%);
-      transition: width 0.35s ease;
-    }
-
-    .progress-label {
-      position: absolute;
-      inset: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 10.5px;
-      font-weight: 900;
-      color: #ffffff;
-    }
-
-    .sub-rule-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-top: 5px;
-      font-size: 10.5px;
-      font-weight: 700;
-      color: #fde68a;
-    }
-
-    .live-pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      padding: 1px 7px;
-      border-radius: 999px;
-      background: rgba(0, 0, 0, 0.45);
-      font-size: 10px;
-      color: #d6d3d1;
-    }
-
-    .live-dot {
-      width: 7px;
-      height: 7px;
-      border-radius: 50%;
-      background: #78716c;
-    }
-
-    .live-dot.connected {
-      background: #22c55e;
-      box-shadow: 0 0 8px #22c55e;
-    }
-
-    /* =========================================================================
-       3. THÔNG BÁO NỔI & LỊCH SỬ TƯƠNG TÁC
-       ========================================================================= */
-    .middle-zone {
-      position: relative;
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      padding: 8px 0;
-      overflow: hidden;
-    }
-
-    .floating-alerts {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 5px;
-      min-height: 36px;
-    }
-
-    .float-banner {
-      padding: 5px 12px;
-      border-radius: 999px;
-      background: linear-gradient(90deg, rgba(180, 83, 9, 0.94), rgba(120, 53, 15, 0.94));
-      border: 1.5px solid #fde047;
-      font-size: 12px;
-      font-weight: 900;
-      color: #fffbeb;
-      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.45);
-      animation: floatFade 3s ease forwards;
-      text-align: center;
-      max-width: 94%;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    @keyframes floatFade {
-      0% { opacity: 0; transform: translateY(10px) scale(0.92); }
-      15% { opacity: 1; transform: translateY(0) scale(1); }
-      82% { opacity: 1; transform: translateY(-4px); }
-      100% { opacity: 0; transform: translateY(-14px); }
-    }
-
-    .feed-box {
-      align-self: flex-start;
-      max-width: 78%;
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-      margin-bottom: 4px;
-    }
-
-    .feed-item {
-      padding: 4px 9px;
-      border-radius: 10px;
-      background: rgba(24, 15, 8, 0.72);
-      border: 1px solid rgba(251, 191, 36, 0.3);
-      font-size: 11px;
-      font-weight: 700;
-      color: #fef3c7;
-      line-height: 1.25;
-      backdrop-filter: blur(2px);
-    }
-
-    .feed-item strong {
-      color: #fcd34d;
-    }
-
-    /* =========================================================================
-       4. DẢI QUÀ TẶNG & THANH NÚT ĐIỀU KHIỂN
-       ========================================================================= */
-    .bottom-dock {
-      pointer-events: auto;
-      display: flex;
-      flex-direction: column;
-      gap: 7px;
-    }
-
-    .gift-strip {
-      border-radius: 14px;
-      padding: 7px;
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 6px;
-      max-height: 148px;
-      overflow-y: auto;
-    }
-
-    .gift-card {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 2px;
-      padding: 6px 4px;
-      border-radius: 11px;
-      background: rgba(255, 251, 235, 0.08);
-      border: 1px solid rgba(251, 191, 36, 0.32);
-      color: #fffbeb;
-      cursor: pointer;
-      transition: transform 0.12s ease, background 0.15s ease;
-    }
-
-    .gift-card:active {
-      transform: scale(0.93);
-      background: rgba(251, 191, 36, 0.28);
-    }
-
-    .gift-icon {
-      font-size: 20px;
-      line-height: 1.1;
-    }
-
-    .gift-name {
-      font-size: 10.5px;
-      font-weight: 800;
-      color: #fef3c7;
-      text-align: center;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      max-width: 100%;
-    }
-
-    .gift-val {
-      font-size: 10px;
-      font-weight: 900;
-      color: #fcd34d;
-      background: rgba(0, 0, 0, 0.42);
-      padding: 1px 6px;
+    .thin-scroll::-webkit-scrollbar-thumb {
+      background: rgba(251, 191, 36, 0.55);
       border-radius: 999px;
     }
 
-    .control-bar {
-      display: grid;
-      grid-template-columns: 1fr 1fr 1fr;
-      gap: 7px;
+    @keyframes giftFloatUp {
+      0% {
+        opacity: 0;
+        transform: translateY(14px) scale(0.86);
+      }
+      16% {
+        opacity: 1;
+        transform: translateY(0px) scale(1.04);
+      }
+      78% {
+        opacity: 1;
+        transform: translateY(-16px) scale(1);
+      }
+      100% {
+        opacity: 0;
+        transform: translateY(-28px) scale(0.95);
+      }
     }
 
-    .ctrl-btn {
-      height: 38px;
-      border-radius: 12px;
-      border: 1.5px solid rgba(253, 224, 71, 0.55);
-      font-size: 12.5px;
-      font-weight: 900;
-      color: #fffbeb;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 5px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.45);
-      transition: transform 0.12s ease, opacity 0.15s ease;
+    .gift-toast-float {
+      animation: giftFloatUp 2.5s ease-out forwards;
     }
 
-    .ctrl-btn:active {
-      transform: scale(0.95);
+    @keyframes screenShake {
+      0%, 100% { transform: translate(0, 0) rotate(0deg); }
+      20% { transform: translate(-5px, 3px) rotate(-0.4deg); }
+      40% { transform: translate(5px, -3px) rotate(0.4deg); }
+      60% { transform: translate(-4px, -2px) rotate(-0.25deg); }
+      80% { transform: translate(4px, 2px) rotate(0.25deg); }
     }
 
-    .btn-demo {
-      background: linear-gradient(180deg, #16a34a, #15803d);
+    .shake-effect {
+      animation: screenShake 0.45s ease-in-out;
     }
 
-    .btn-demo.active {
-      background: linear-gradient(180deg, #dc2626, #b91c1c);
+    @keyframes stormLightning {
+      0%, 100% { opacity: 0; }
+      15% { opacity: 0.55; }
+      25% { opacity: 0.08; }
+      40% { opacity: 0.65; }
+      55% { opacity: 0; }
     }
 
-    .btn-audio {
-      background: linear-gradient(180deg, #0284c7, #0369a1);
-    }
-
-    .btn-audio.muted {
-      background: linear-gradient(180deg, #57534e, #44403c);
-      opacity: 0.85;
-    }
-
-    .btn-edit {
-      background: linear-gradient(180deg, #d97706, #b45309);
-    }
-
-    /* =========================================================================
-       5. MODAL CẤU HÌNH ("SỬA")
-       ========================================================================= */
-    .modal-backdrop {
-      position: absolute;
-      inset: 0;
-      z-index: 30;
-      background: rgba(10, 6, 3, 0.82);
-      backdrop-filter: blur(5px);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 12px;
-    }
-
-    .modal-backdrop.hidden {
-      display: none !important;
-    }
-
-    .modal-card {
-      width: 100%;
-      max-height: 92%;
-      border-radius: 18px;
-      background: #1f140c;
-      border: 1.5px solid rgba(251, 191, 36, 0.65);
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.85);
-    }
-
-    .modal-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 11px 14px;
-      background: #2c1c10;
-      border-bottom: 1px solid rgba(251, 191, 36, 0.3);
-    }
-
-    .modal-title {
-      font-size: 14px;
-      font-weight: 900;
-      color: #fde68a;
-    }
-
-    .modal-close {
-      width: 30px;
-      height: 30px;
-      border-radius: 8px;
-      border: 1px solid rgba(251, 191, 36, 0.4);
-      background: rgba(0, 0, 0, 0.35);
-      color: #fef3c7;
-      font-size: 15px;
-      font-weight: 900;
-      cursor: pointer;
-    }
-
-    .tab-row {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      background: #160e08;
-      border-bottom: 1px solid rgba(251, 191, 36, 0.25);
-    }
-
-    .tab-btn {
-      padding: 10px 6px;
-      border: none;
-      background: transparent;
-      color: #a8a29e;
-      font-size: 12px;
-      font-weight: 800;
-      cursor: pointer;
-      border-bottom: 2px solid transparent;
-    }
-
-    .tab-btn.active {
-      color: #fcd34d;
-      border-bottom-color: #f59e0b;
-      background: rgba(245, 158, 11, 0.1);
-    }
-
-    .modal-body {
-      padding: 12px;
-      overflow-y: auto;
-      display: flex;
-      flex-direction: column;
-      gap: 11px;
-    }
-
-    .tab-pane.hidden {
-      display: none !important;
-    }
-
-    .field-group {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-
-    .field-label {
-      font-size: 11px;
-      font-weight: 800;
-      color: #fde68a;
-    }
-
-    .field-input {
-      width: 100%;
-      padding: 8px 10px;
-      border-radius: 10px;
-      border: 1px solid rgba(251, 191, 36, 0.4);
-      background: #120b06;
-      color: #fffbeb;
-      font-size: 12.5px;
-      outline: none;
-    }
-
-    .field-input:focus {
-      border-color: #facc15;
-    }
-
-    .status-box {
-      padding: 8px 10px;
-      border-radius: 10px;
-      background: rgba(0, 0, 0, 0.45);
-      border: 1px solid rgba(251, 191, 36, 0.25);
-      font-size: 11.5px;
-      line-height: 1.45;
-      color: #e7e5e4;
-      word-break: break-word;
-    }
-
-    .btn-row-2 {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 8px;
-    }
-
-    .action-btn {
-      padding: 9px 10px;
-      border-radius: 10px;
-      border: none;
-      font-size: 12px;
-      font-weight: 900;
-      color: #fffbeb;
-      cursor: pointer;
-    }
-
-    .action-primary {
-      background: linear-gradient(180deg, #16a34a, #15803d);
-    }
-
-    .action-danger {
-      background: linear-gradient(180deg, #dc2626, #991b1b);
-    }
-
-    .action-amber {
-      background: linear-gradient(180deg, #d97706, #b45309);
-    }
-
-    .tier-grid {
-      display: grid;
-      grid-template-columns: repeat(5, 1fr);
-      gap: 5px;
-    }
-
-    .tier-item {
-      display: flex;
-      flex-direction: column;
-      gap: 3px;
-      text-align: center;
-      font-size: 10px;
-      color: #fcd34d;
-      font-weight: 800;
-    }
-
-    .tier-item input {
-      padding: 6px 4px;
-      text-align: center;
-      font-size: 11px;
-    }
-
-    .gift-edit-list {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-      max-height: 185px;
-      overflow-y: auto;
-    }
-
-    .gift-edit-row {
-      display: grid;
-      grid-template-columns: 38px 1fr 68px 32px;
-      gap: 5px;
-      align-items: center;
-    }
-
-    .gift-edit-row input {
-      padding: 6px 6px;
-      font-size: 11.5px;
-    }
-
-    .del-gift-btn {
-      height: 30px;
-      border-radius: 8px;
-      border: 1px solid rgba(239, 68, 68, 0.5);
-      background: rgba(185, 28, 28, 0.45);
-      color: #fecaca;
-      font-weight: 900;
-      cursor: pointer;
-    }
-
-    .toggle-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 8px 10px;
-      border-radius: 10px;
-      background: rgba(255, 255, 255, 0.05);
-      font-size: 12px;
-      font-weight: 800;
-      color: #fef3c7;
-    }
-
-    .toggle-row input[type="checkbox"] {
-      width: 18px;
-      height: 18px;
-      accent-color: #f59e0b;
+    .storm-flash-anim {
+      animation: stormLightning 1.2s ease-out;
     }
   </style>
 </head>
 <body>
-  <div class="app-viewport">
-    <div class="phone-frame">
-      <canvas id="villageCanvas"></canvas>
+  <!-- Thông báo nổi nội bộ (không dùng alert/confirm) -->
+  <div id="appToast" class="pointer-events-none fixed top-4 left-1/2 -translate-x-1/2 z-50 transition-all duration-300 opacity-0 -translate-y-3 max-w-[90vw]">
+    <div id="appToastMsg" class="px-4 py-2 rounded-full bg-stone-900/95 border border-amber-300/60 text-amber-100 text-xs font-bold shadow-xl text-center"></div>
+  </div>
 
-      <div class="hud-overlay">
-        <!-- THANH TIẾN ĐỘ XÂY NHÀ 5 CẤP -->
-        <header class="top-bar wood-panel">
-          <div class="top-header-row">
-            <span class="game-title stroke-shadow">🏠 Giúp Lão Xây Nhà</span>
-            <span id="levelBadge" class="level-badge">Cấp 1/5</span>
+  <div class="live-stage-wrap">
+    <div id="livePhoneBox" class="live-phone-box">
+      <!-- Canvas cảnh sân tre, ruộng lúa, lều tạm, chiếu cói, mâm cơm, cụ già chắp tay & người xem đi vào -->
+      <canvas id="gameCanvas"></canvas>
+
+      <!-- Hiệu ứng tia chớp khi có sự kiện Bão -->
+      <div id="stormFlashOverlay" class="pointer-events-none fixed inset-0 z-20 opacity-0 bg-amber-100"></div>
+
+      <!-- Giao diện nổi gọn sạch trên màn hình live -->
+      <div class="hud-layer">
+        <!-- TOP HUD: Thẻ tiến độ "Giúp Lão Xây Nhà" -->
+        <div class="px-2.5 pt-2.5 pb-1 flex flex-col gap-1.5 shrink-0">
+          <div class="relative mx-auto w-full wood-card rounded-2xl px-3 py-2 text-center pointer-events-auto">
+            <div class="flex items-center justify-center gap-1.5">
+              <span class="text-sm sm:text-base font-black text-amber-200 text-stroke-dark tracking-tight">
+                Giúp Lão Xây Nhà
+              </span>
+              <span id="houseLevelPill" class="px-2 py-0.5 rounded-full bg-amber-950/90 border border-amber-300/45 text-[10px] font-extrabold text-amber-200">
+                Nhà cấp 1/5
+              </span>
+            </div>
+
+            <div class="flex items-center justify-center gap-1.5 mt-0.5">
+              <span class="inline-block w-3.5 h-4 rounded-full bg-gradient-to-br from-yellow-200 via-amber-400 to-amber-600 border border-yellow-100/80 shadow"></span>
+              <span id="hudCoinsValue" class="text-xl sm:text-2xl font-black text-amber-300 text-stroke-dark">
+                8,7k
+              </span>
+            </div>
+
+            <div class="relative w-full h-3.5 bg-stone-950/85 rounded-full overflow-hidden border border-amber-200/35 mt-1">
+              <div id="hudProgressFill" class="h-full bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-200 rounded-full transition-all duration-500" style="width: 43%;"></div>
+              <span id="hudProgressPct" class="absolute inset-0 flex items-center justify-center text-[10px] font-black text-white text-stroke-dark">
+                43%
+              </span>
+            </div>
+
+            <div id="hudGoalLine" class="text-[11px] font-bold text-amber-100/95 mt-1 text-stroke-dark">
+              Xây cấp 2: 8,7k / 20k 🪙
+            </div>
+          </div>
+        </div>
+
+        <!-- MIDDLE HUD: BXH "Người Thương Ông" (trái), Bong bóng thoại + Quà bay lên (giữa), Bảng quà & sự kiện (phải) -->
+        <div class="relative flex-1 w-full px-2 flex items-start justify-between gap-1.5 my-1 min-h-0 overflow-hidden">
+          <!-- BXH bên trái -->
+          <div class="wood-card rounded-xl p-1.5 w-[104px] max-w-[30%] shrink-0 pointer-events-auto">
+            <div class="text-[9.5px] font-extrabold text-amber-200 text-center pb-1 mb-1 border-b border-amber-300/25 truncate">
+              Người Thương Ông
+            </div>
+            <div id="leaderboardContainer" class="flex flex-col gap-1"></div>
           </div>
 
-          <div class="score-display-row">
-            <span id="currentScoreText" class="score-main stroke-shadow">0</span>
-            <span id="targetScoreText" class="score-target stroke-shadow">/ 20.000 xây nhà</span>
-          </div>
-
-          <div class="progress-track">
-            <div id="progressFill" class="progress-fill"></div>
-            <div id="progressPercent" class="progress-label stroke-shadow">0%</div>
-          </div>
-
-          <div class="sub-rule-row">
-            <span>Quy đổi: 1 quà = 100 xây nhà</span>
-            <span class="live-pill">
-              <span id="liveDot" class="live-dot"></span>
-              <span id="liveStatusMini">Chế độ thử</span>
-            </span>
-          </div>
-        </header>
-
-        <!-- THÔNG BÁO BAY LÊN & LỊCH SỬ TƯƠNG TÁC -->
-        <main class="middle-zone">
-          <div id="floatingAlerts" class="floating-alerts"></div>
-          <div id="feedBox" class="feed-box"></div>
-        </main>
-
-        <!-- DẢI QUÀ TẶNG & NÚT ĐIỀU KHIỂN -->
-        <footer class="bottom-dock">
-          <div id="giftStrip" class="gift-strip wood-panel"></div>
-
-          <div class="control-bar">
-            <button id="demoBtn" class="ctrl-btn btn-demo" type="button">▶ Demo</button>
-            <button id="audioBtn" class="ctrl-btn btn-audio" type="button">🔊 Âm thanh</button>
-            <button id="editBtn" class="ctrl-btn btn-edit" type="button">⚙️ Sửa</button>
-          </div>
-        </footer>
-      </div>
-
-      <!-- MODAL CẤU HÌNH ("SỬA") -->
-      <div id="configModal" class="modal-backdrop hidden">
-        <div class="modal-card">
-          <div class="modal-header">
-            <span class="modal-title">⚙️ Cấu Hình Giúp Lão Xây Nhà</span>
-            <button id="closeModalBtn" class="modal-close" type="button">✕</button>
-          </div>
-
-          <div class="tab-row">
-            <button class="tab-btn active" data-tab="tabLive" type="button">Kết nối LIVE</button>
-            <button class="tab-btn" data-tab="tabSettings" type="button">Cài đặt quà &amp; Mốc</button>
-          </div>
-
-          <div class="modal-body">
-            <!-- TAB 1: KẾT NỐI LIVE -->
-            <div id="tabLive" class="tab-pane" style="display:flex;flex-direction:column;gap:10px;">
-              <div class="field-group">
-                <label class="field-label" for="bridgeUrlInput">URL Bridge (WebSocket)</label>
-                <input
-                  id="bridgeUrlInput"
-                  class="field-input"
-                  type="text"
-                  value="wss://tiktok-bridge-1-gw2n.onrender.com"
-                  placeholder="wss://tiktok-bridge-1-gw2n.onrender.com"
-                />
-              </div>
-
-              <div class="field-group">
-                <label class="field-label" for="tiktokIdInput">ID TikTok Live (@id kênh đang phát trực tiếp)</label>
-                <input
-                  id="tiktokIdInput"
-                  class="field-input"
-                  type="text"
-                  value="chuyennharua19"
-                  placeholder="chuyennharua19"
-                />
-              </div>
-
-              <div class="btn-row-2">
-                <button id="connectLiveBtn" class="action-btn action-primary" type="button">Kết nối ID</button>
-                <button id="disconnectLiveBtn" class="action-btn action-danger" type="button">Ngắt kết nối</button>
-              </div>
-
-              <div id="liveLogBox" class="status-box">
-                Trạng thái: Sẵn sàng kết nối tới wss://tiktok-bridge-1-gw2n.onrender.com cho kênh @chuyennharua19.
+          <!-- Khu vực giữa: Bong bóng thoại & thông báo quà nổi -->
+          <div class="flex-1 flex flex-col items-center justify-center px-0.5 min-w-0">
+            <div id="gratitudeBubble" title="Chạm để nghe ông lão đọc lời cảm ơn" class="w-full max-w-[174px] rounded-2xl bg-stone-900/85 backdrop-blur-sm border border-amber-200/50 px-2.5 py-2 text-center shadow-lg pointer-events-auto cursor-pointer hover:border-amber-300 transition">
+              <p id="gratitudeBubbleText" class="text-[10.5px] sm:text-[11.5px] font-bold text-amber-100 leading-snug text-stroke-dark break-words">
+                « Cảm ơn Ebenhyý, có gạch có ngói là lão yên tâm rồi! »
+              </p>
+              <div class="mt-1 flex items-center justify-center gap-1 text-[9px] font-semibold text-amber-300">
+                <span>🔊</span>
+                <span id="speechBubbleHint">Chạm để nghe lão cảm ơn</span>
               </div>
             </div>
 
-            <!-- TAB 2: CÀI ĐẶT QUÀ & MỐC -->
-            <div id="tabSettings" class="tab-pane hidden" style="display:flex;flex-direction:column;gap:10px;">
-              <div class="field-group">
-                <label class="field-label">5 Mốc Cấp Nhà (Điểm xây nhà)</label>
-                <div class="tier-grid">
-                  <div class="tier-item"><span>Cấp 1</span><input id="tierInput0" class="field-input" type="number" /></div>
-                  <div class="tier-item"><span>Cấp 2</span><input id="tierInput1" class="field-input" type="number" /></div>
-                  <div class="tier-item"><span>Cấp 3</span><input id="tierInput2" class="field-input" type="number" /></div>
-                  <div class="tier-item"><span>Cấp 4</span><input id="tierInput3" class="field-input" type="number" /></div>
-                  <div class="tier-item"><span>Cấp 5</span><input id="tierInput4" class="field-input" type="number" /></div>
+            <div id="floatingGiftArea" class="relative w-full h-11 mt-1.5 flex items-center justify-center pointer-events-none overflow-hidden"></div>
+          </div>
+
+          <!-- Danh sách quà tặng & sự kiện bên phải -->
+          <div class="wood-card rounded-xl p-1.5 w-[106px] max-w-[31%] max-h-[305px] shrink-0 flex flex-col pointer-events-auto">
+            <div class="text-[9.5px] font-extrabold text-amber-200 text-center pb-1 mb-1 border-b border-amber-300/25 truncate">
+              Xin Chào Cô Bác
+            </div>
+
+            <div id="giftButtonsContainer" class="flex-1 overflow-y-auto thin-scroll flex flex-col gap-1 pr-0.5"></div>
+
+            <button id="btnOpenEditorRight" type="button" class="mt-1.5 w-full py-1.5 px-1 rounded-lg bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 text-stone-950 font-extrabold text-[9.5px] shadow cursor-pointer transition flex items-center justify-center gap-1">
+              <span>✏️</span>
+              <span class="truncate">Sửa</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- BOTTOM HUD: Chỉ giữ các nút điều khiển tối giản (Nhạc, Đọc, Sửa) và chú thích nhỏ -->
+        <div class="px-2.5 pb-2.5 pt-1 flex flex-col gap-1.5 shrink-0 bg-gradient-to-t from-stone-950/75 via-stone-950/35 to-transparent">
+          <div class="flex items-center justify-center gap-2 pointer-events-auto">
+            <button id="btnMusicToggle" type="button" class="px-3.5 py-2 rounded-xl bg-stone-900/90 hover:bg-stone-800 border border-amber-300/35 text-xs font-bold text-amber-200 shadow cursor-pointer transition flex items-center gap-1.5">
+              <span id="musicBtnIcon">🎵</span>
+              <span id="musicBtnLabel">Nhạc</span>
+            </button>
+
+            <button id="btnVoiceToggle" type="button" class="px-3.5 py-2 rounded-xl bg-stone-900/90 hover:bg-stone-800 border border-emerald-300/40 text-xs font-bold text-emerald-200 shadow cursor-pointer transition flex items-center gap-1.5">
+              <span id="voiceBtnIcon">🗣️</span>
+              <span id="voiceBtnLabel">Đọc</span>
+            </button>
+
+            <button id="btnOpenEditorBottom" type="button" class="px-3.5 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 text-stone-950 text-xs font-extrabold shadow cursor-pointer transition flex items-center gap-1.5">
+              <span>✏️</span>
+              <span>Sửa</span>
+            </button>
+          </div>
+
+          <div class="text-center text-[10px] font-medium text-white/85 text-stroke-dark leading-tight">
+            Trò chơi giải trí · nhân vật hoạt hình hư cấu
+          </div>
+        </div>
+      </div>
+
+      <!-- MODAL "SỬA": Chứa Test vs Kết nối LIVE, Set Test, ID TikTok Live, Bridge URL, Sửa Quà, Bình luận & Nhạc/Giọng/Mốc -->
+      <div id="studioModal" class="hidden absolute inset-0 z-30 bg-stone-950/94 backdrop-blur-md flex flex-col pointer-events-auto">
+        <div class="px-4 py-3 border-b border-amber-400/25 flex items-center justify-between bg-stone-900/95 shrink-0">
+          <div>
+            <h2 class="text-sm font-black text-amber-300">Sửa — Cấu Hình Live, Test &amp; Quà Tặng</h2>
+            <p class="text-[11px] text-stone-300">Tách riêng Test &amp; Kết nối LIVE · Sửa quà, xu, lời thoại &amp; giọng đọc</p>
+          </div>
+          <button id="btnCloseStudioModal" type="button" class="px-3 py-1.5 rounded-xl bg-stone-800 hover:bg-stone-700 text-xs font-bold text-white border border-white/15 cursor-pointer">
+            Đóng ✕
+          </button>
+        </div>
+
+        <!-- Tabs bên trong phần Sửa -->
+        <div class="grid grid-cols-3 gap-1.5 px-3 pt-2.5 shrink-0">
+          <button type="button" data-studio-tab="mode" class="studio-tab py-1.5 rounded-lg text-xs font-extrabold bg-amber-500 text-stone-950 cursor-pointer">
+            Test &amp; Live ID
+          </button>
+          <button type="button" data-studio-tab="gifts" class="studio-tab py-1.5 rounded-lg text-xs font-bold bg-stone-800 text-stone-200 cursor-pointer">
+            Quà &amp; Sự Kiện
+          </button>
+          <button type="button" data-studio-tab="audio" class="studio-tab py-1.5 rounded-lg text-xs font-bold bg-stone-800 text-stone-200 cursor-pointer">
+            Nhạc, Giọng &amp; Mốc
+          </button>
+        </div>
+
+        <div class="flex-1 overflow-y-auto thin-scroll p-3.5 space-y-3">
+          <!-- TAB 1: CHẾ ĐỘ TEST / KẾT NỐI LIVE & BÌNH LUẬN / QUÀ -->
+          <div id="studioTab-mode" class="space-y-3">
+            <!-- Bộ chuyển chế độ Test vs Kết nối LIVE -->
+            <div class="p-3 rounded-2xl bg-stone-900 border border-amber-400/30 space-y-2.5">
+              <div class="flex items-center justify-between gap-2">
+                <div class="inline-flex rounded-xl bg-stone-800 p-1 border border-white/10">
+                  <button id="btnModeTest" type="button" class="px-3 py-1 rounded-lg text-xs font-extrabold bg-amber-500 text-stone-950 cursor-pointer transition">
+                    Test
+                  </button>
+                  <button id="btnModeLive" type="button" class="px-3 py-1 rounded-lg text-xs font-extrabold text-stone-300 hover:text-white cursor-pointer transition">
+                    Kết nối LIVE
+                  </button>
+                </div>
+                <span id="modeSummaryBadge" class="text-[11px] font-extrabold text-amber-200">
+                  Chế độ: Test
+                </span>
+              </div>
+
+              <!-- KHU VỰC SET TEST: Chỉ hiển thị khi ở chế độ Test và chưa lưu (hoặc khi mở lại Set Test) -->
+              <div id="testSetupPanel" class="p-2.5 rounded-xl bg-stone-950/75 border border-emerald-400/30 space-y-2">
+                <div class="text-xs font-extrabold text-emerald-300">🧪 Set Test (Chạy thử trước khi Live)</div>
+                <div class="grid grid-cols-2 gap-2">
+                  <input id="testViewerNameInput" type="text" placeholder="Tên người xem (VD: Ebenhyý)" class="px-2.5 py-1.5 rounded-lg bg-stone-800 border border-white/15 text-xs text-white placeholder-stone-400" />
+                  <select id="testGiftSelect" class="px-2 py-1.5 rounded-lg bg-stone-800 border border-white/15 text-xs text-white"></select>
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                  <input id="testCoinsInput" type="number" min="1" placeholder="Số xu test (tùy chọn)" class="px-2.5 py-1.5 rounded-lg bg-stone-800 border border-white/15 text-xs text-white placeholder-stone-400" />
+                  <input id="testCommentInput" type="text" placeholder="Bình luận test (tùy chọn)" class="px-2.5 py-1.5 rounded-lg bg-stone-800 border border-white/15 text-xs text-white placeholder-stone-400" />
+                </div>
+                <button id="btnSaveTestSetup" type="button" class="w-full py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs cursor-pointer transition">
+                  Lưu Test &amp; Ẩn Set Test
+                </button>
+              </div>
+
+              <!-- Thanh trạng thái khi đã lưu Test và ẩn Set Test -->
+              <div id="testSavedBanner" class="hidden p-2.5 rounded-xl bg-emerald-950/50 border border-emerald-400/35 flex items-center justify-between gap-2">
+                <div class="text-[11px] text-emerald-200 leading-snug">
+                  Đã lưu cấu hình Test. Phần Set Test đang ẩn để giao diện gọn gàng.
+                </div>
+                <button id="btnReopenTestSetup" type="button" class="px-2.5 py-1 rounded-lg bg-stone-800 hover:bg-stone-700 text-amber-200 text-[11px] font-bold border border-amber-300/30 cursor-pointer shrink-0">
+                  Sửa Test
+                </button>
+              </div>
+
+              <!-- KHU VỰC KẾT NỐI LIVE: Hiển thị khi chọn "Kết nối LIVE" -->
+              <div id="liveConnectPanel" class="hidden p-2.5 rounded-xl bg-stone-950/75 border border-rose-400/35 space-y-2">
+                <div class="flex items-center justify-between gap-2">
+                  <div class="flex items-center gap-1.5">
+                    <span id="ttLiveStatusDot" class="w-2.5 h-2.5 rounded-full bg-stone-500 shrink-0"></span>
+                    <span class="text-xs font-extrabold text-rose-200">Kết nối TikTok Live theo ID</span>
+                  </div>
+                  <span id="ttLiveStatusLabel" class="text-[10.5px] font-semibold text-stone-300">Chưa kết nối</span>
+                </div>
+
+                <div class="flex items-center gap-1.5">
+                  <input id="tiktokLiveIdInput" type="text" placeholder="ID TikTok Live (VD: @lao_xay_nha)" class="flex-1 min-w-0 px-2.5 py-1.5 rounded-lg bg-stone-800 border border-white/15 text-xs font-semibold text-white placeholder-stone-400" />
+                  <button id="btnConnectTikTokId" type="button" class="px-3 py-1.5 rounded-lg bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-500 hover:to-pink-500 text-white text-xs font-extrabold cursor-pointer shrink-0 transition">
+                    Kết nối ID
+                  </button>
+                </div>
+
+                <div class="space-y-1 pt-1 border-t border-white/10">
+                  <label class="block text-[11px] font-bold text-amber-200">URL Bridge (WebSocket wss:// hoặc SSE https://)</label>
+                  <input id="tiktokBridgeUrlInput" type="text" placeholder="wss://bridge-cua-ban.example/live?id={id}" class="w-full px-2.5 py-1.5 rounded-lg bg-stone-800 border border-white/15 text-[11px] text-white placeholder-stone-400" />
+                  <p id="ttConnectionNote" class="text-[10.5px] text-amber-200/85 leading-snug">
+                    Trình duyệt không kết nối thẳng tới TikTok Live bằng @id nếu không có Bridge server đẩy sự kiện JSON (gift / comment). Nếu chưa có Bridge, hệ thống có thể bật luồng mô phỏng khi bấm Kết nối ID.
+                  </p>
                 </div>
               </div>
+            </div>
 
-              <label class="toggle-row">
-                <span>🎵 Nhạc nền ngũ cung &amp; hiệu ứng âm thanh</span>
-                <input id="musicToggle" type="checkbox" checked />
-              </label>
+            <!-- Phát quà hoặc đọc bình luận người xem thủ công -->
+            <div class="p-3 rounded-2xl bg-stone-900 border border-sky-400/25 space-y-2.5">
+              <div class="text-xs font-extrabold text-sky-300">🎁 Phát Quà Hoặc Đọc Bình Luận Người Xem</div>
+              <input id="customViewerName" type="text" value="Ebenhyý" placeholder="Tên người xem (VD: Ebenhyý, Thu hang...)" class="w-full px-2.5 py-2 rounded-xl bg-stone-800 border border-white/15 text-xs text-white" />
 
-              <label class="toggle-row">
-                <span>🗣️ Đọc lời cảm ơn tiếng Việt (không đọc chữ xu)</span>
-                <input id="voiceToggle" type="checkbox" checked />
-              </label>
+              <div class="grid grid-cols-2 gap-2">
+                <select id="customGiftPicker" class="px-2.5 py-2 rounded-xl bg-stone-800 border border-white/15 text-xs text-white"></select>
+                <input id="customCoinOverride" type="number" min="1" placeholder="Số xu (tùy chọn)" class="px-2.5 py-2 rounded-xl bg-stone-800 border border-white/15 text-xs text-white" />
+              </div>
 
-              <div class="field-group">
-                <div style="display:flex;justify-content:space-between;align-items:center;">
-                  <label class="field-label">Danh sách quà tặng (1 quà = 100 xây nhà)</label>
-                  <button id="addGiftBtn" class="action-btn action-amber" style="padding:4px 9px;font-size:11px;" type="button">+ Thêm quà</button>
+              <button id="btnTriggerCustomGift" type="button" class="w-full py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white font-extrabold text-xs cursor-pointer transition">
+                Đưa Nhân Vật Vào Tặng Quà &amp; Cảm Ơn
+              </button>
+
+              <div class="pt-1 border-t border-white/10 space-y-2">
+                <input id="customViewerComment" type="text" placeholder="Bình luận của người xem (VD: Cố lên lão ơi, giúp lão xây nhà nhé!)" class="w-full px-2.5 py-2 rounded-xl bg-stone-800 border border-white/15 text-xs text-white" />
+                <button id="btnTriggerCustomComment" type="button" class="w-full py-2 rounded-xl bg-sky-600 hover:bg-sky-500 text-white font-extrabold text-xs cursor-pointer transition">
+                  Đưa Nhân Vật Vào &amp; Đọc Bình Luận
+                </button>
+              </div>
+            </div>
+
+            <!-- Luồng tương tác tự động -->
+            <div class="p-3 rounded-2xl bg-stone-900 border border-amber-400/25 space-y-2">
+              <div class="flex items-center justify-between">
+                <div>
+                  <div class="text-xs font-extrabold text-amber-200">📡 Luồng Tương Tác Tự Động</div>
+                  <div class="text-[11px] text-stone-400">Nhân vật đi vào sân tặng quà &amp; bình luận định kỳ</div>
                 </div>
-                <div id="giftEditList" class="gift-edit-list"></div>
+                <input id="toggleAutoLiveStream" type="checkbox" class="w-5 h-5 accent-amber-500 cursor-pointer" />
+              </div>
+              <input id="liveRoomTagInput" type="text" placeholder="Ghi chú phòng / luồng (VD: Ca chiều)" class="w-full px-2.5 py-1.5 rounded-xl bg-stone-800 border border-white/15 text-xs text-white" />
+            </div>
+          </div>
+
+          <!-- TAB 2: CHỈNH SỬA & THÊM QUÀ TẶNG / SỰ KIỆN -->
+          <div id="studioTab-gifts" class="hidden space-y-3">
+            <div class="p-3 rounded-2xl bg-stone-900 border border-amber-400/25 space-y-2">
+              <div class="text-xs font-extrabold text-amber-200">+ Thêm Quà Tặng / Sự Kiện Mới</div>
+              <div class="grid grid-cols-4 gap-2">
+                <input id="addGiftIcon" type="text" maxlength="4" value="🧱" placeholder="Icon" class="px-2 py-1.5 rounded-lg bg-stone-800 border border-white/15 text-xs text-center text-white" />
+                <input id="addGiftName" type="text" maxlength="24" placeholder="Tên quà (VD: Gạch đỏ)" class="col-span-3 px-2.5 py-1.5 rounded-lg bg-stone-800 border border-white/15 text-xs text-white" />
+              </div>
+              <div class="grid grid-cols-2 gap-2">
+                <input id="addGiftCoins" type="number" min="1" step="1" value="500" placeholder="Số xu" class="px-2.5 py-1.5 rounded-lg bg-stone-800 border border-white/15 text-xs text-white" />
+                <select id="addGiftEffect" class="px-2.5 py-1.5 rounded-lg bg-stone-800 border border-white/15 text-xs text-white">
+                  <option value="build">Hiệu ứng: Gạch ngói xây nhà</option>
+                  <option value="coins">Hiệu ứng: Xu vàng lấp lánh</option>
+                  <option value="food">Hiệu ứng: Rau bánh mâm cơm</option>
+                  <option value="bark">Hiệu ứng: Chó sủa</option>
+                  <option value="music">Hiệu ứng: Đờn ca nốt nhạc</option>
+                  <option value="storm">Hiệu ứng: Bão &amp; sấm chớp</option>
+                  <option value="throw">Hiệu ứng: Ném đá</option>
+                </select>
+              </div>
+              <input id="addGiftSpeech" type="text" value="Cảm ơn {name}, có {gift} tặng {coins} xu là lão yên tâm rồi! Giúp lão xây nhà nhé!" placeholder="Câu cảm ơn ({name}, {gift}, {coins})" class="w-full px-2.5 py-1.5 rounded-lg bg-stone-800 border border-white/15 text-xs text-white" />
+              <button id="btnCreateGift" type="button" class="w-full py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-stone-950 font-extrabold text-xs cursor-pointer transition">
+                Thêm Vào Danh Sách Quà
+              </button>
+            </div>
+
+            <div class="text-[11px] text-amber-200/90 bg-amber-500/10 border border-amber-400/25 rounded-xl px-3 py-2">
+              Hỗ trợ biến trong lời thoại: <code class="text-amber-300">{name}</code> (tên người xem), <code class="text-amber-300">{gift}</code> (tên quà), <code class="text-amber-300">{coins}</code> (số xu). Hệ thống luôn cảm ơn đúng tên người tặng và nhắc giúp lão xây nhà.
+            </div>
+
+            <div id="customGiftListEditor" class="space-y-2"></div>
+          </div>
+
+          <!-- TAB 3: NHẠC NỀN, GIỌNG ĐỌC TIẾNG VIỆT & MỐC XÂY NHÀ -->
+          <div id="studioTab-audio" class="hidden space-y-3">
+            <div class="p-3 rounded-2xl bg-stone-900 border border-white/10 space-y-3">
+              <div class="flex items-center justify-between">
+                <div>
+                  <div class="text-xs font-bold text-white">Đọc giọng tiếng Việt thời gian thực</div>
+                  <div class="text-[11px] text-stone-400">Đọc lời cảm ơn tên người tặng &amp; bình luận</div>
+                </div>
+                <input id="optVoiceEnabled" type="checkbox" checked class="w-5 h-5 accent-emerald-500 cursor-pointer" />
               </div>
 
-              <div class="btn-row-2">
-                <button id="saveSettingsBtn" class="action-btn action-primary" type="button">Lưu cài đặt</button>
-                <button id="resetProgressBtn" class="action-btn action-danger" type="button">Đặt lại về 0</button>
+              <div class="flex items-center justify-between">
+                <div>
+                  <div class="text-xs font-bold text-white">Tự đọc bình luận người xem</div>
+                  <div class="text-[11px] text-stone-400">Đọc tên + nội dung bình luận khi có tin nhắn mới</div>
+                </div>
+                <input id="optReadComments" type="checkbox" checked class="w-5 h-5 accent-sky-500 cursor-pointer" />
               </div>
+
+              <div>
+                <label class="block text-[11px] font-semibold text-stone-300 mb-1">Giọng đọc tiếng Việt</label>
+                <select id="voicePickerSelect" class="w-full px-2.5 py-2 rounded-xl bg-stone-800 border border-white/15 text-xs text-white">
+                  <option value="">Tự động chọn giọng tiếng Việt</option>
+                </select>
+              </div>
+
+              <div>
+                <div class="flex justify-between text-[11px] text-stone-300 mb-1">
+                  <span>Tốc độ đọc</span>
+                  <span id="voiceRateLabel">1.05x</span>
+                </div>
+                <input id="optVoiceRate" type="range" min="0.7" max="1.45" step="0.05" value="1.05" class="w-full accent-emerald-500 cursor-pointer" />
+              </div>
+
+              <button id="btnPreviewSpeech" type="button" class="w-full py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs cursor-pointer transition">
+                🔊 Đọc Thử Lời Cảm Ơn
+              </button>
+            </div>
+
+            <div class="p-3 rounded-2xl bg-stone-900 border border-white/10 space-y-3">
+              <div class="flex items-center justify-between">
+                <div>
+                  <div class="text-xs font-bold text-white">Nhạc nền ngũ cung &amp; hiệu ứng quà</div>
+                  <div class="text-[11px] text-stone-400">Âm thanh tổng hợp Web Audio chạy mượt trên điện thoại</div>
+                </div>
+                <input id="optMusicEnabled" type="checkbox" checked class="w-5 h-5 accent-amber-500 cursor-pointer" />
+              </div>
+
+              <div>
+                <div class="flex justify-between text-[11px] text-stone-300 mb-1">
+                  <span>Âm lượng nhạc nền</span>
+                  <span id="musicVolLabel">32%</span>
+                </div>
+                <input id="optMusicVol" type="range" min="0" max="1" step="0.05" value="0.32" class="w-full accent-amber-500 cursor-pointer" />
+              </div>
+
+              <div>
+                <div class="flex justify-between text-[11px] text-stone-300 mb-1">
+                  <span>Âm lượng hiệu ứng quà</span>
+                  <span id="sfxVolLabel">75%</span>
+                </div>
+                <input id="optSfxVol" type="range" min="0" max="1" step="0.05" value="0.75" class="w-full accent-amber-500 cursor-pointer" />
+              </div>
+            </div>
+
+            <div class="p-3 rounded-2xl bg-stone-900 border border-white/10 space-y-2.5">
+              <div class="text-xs font-extrabold text-amber-200">🏠 Điều Chỉnh Xu &amp; Cấp Nhà</div>
+              <div class="flex gap-2">
+                <input id="setCoinsDirectInput" type="number" min="0" step="100" class="flex-1 px-2.5 py-1.5 rounded-xl bg-stone-800 border border-white/15 text-xs text-white" />
+                <button id="btnSaveCoinsDirect" type="button" class="px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-stone-950 font-extrabold text-xs cursor-pointer">
+                  Cập nhật
+                </button>
+              </div>
+              <div class="grid grid-cols-3 gap-1.5">
+                <button type="button" data-bump-coins="1000" class="bump-coins-btn py-1.5 rounded-lg bg-stone-800 hover:bg-stone-700 text-[11px] font-bold text-amber-200 cursor-pointer">+1k xu</button>
+                <button type="button" data-bump-coins="5000" class="bump-coins-btn py-1.5 rounded-lg bg-stone-800 hover:bg-stone-700 text-[11px] font-bold text-amber-200 cursor-pointer">+5k xu</button>
+                <button type="button" data-bump-coins="15000" class="bump-coins-btn py-1.5 rounded-lg bg-stone-800 hover:bg-stone-700 text-[11px] font-bold text-amber-200 cursor-pointer">+15k xu</button>
+              </div>
+              <button id="btnResetDefaults" type="button" class="w-full py-2 rounded-xl bg-rose-950/80 hover:bg-rose-900 text-rose-200 border border-rose-500/30 font-bold text-xs cursor-pointer transition">
+                Khôi Phục Mặc Định (8,7k · Cấp 1/5)
+              </button>
             </div>
           </div>
         </div>
@@ -761,1124 +523,2054 @@
   </div>
 
   <script>
-    /* =========================================================================
-       1. CẤU HÌNH MẶC ĐỊNH & TRẠNG THÁI GAME
-       ========================================================================= */
-    const STORAGE_KEY = 'giup_lao_xay_nha_5cap_v4';
-    const CONVERSION_RATE = 100; // 1 quà = 100 xây nhà
-    const DEFAULT_BRIDGE_URL = 'wss://tiktok-bridge-1-gw2n.onrender.com';
-    const DEFAULT_TIKTOK_ID = 'chuyennharua19';
-    const DEFAULT_TIERS = [20000, 40000, 90000, 140000, 200000];
+    /**
+     * =========================================================================
+     * GIÚP LÃO XÂY NHÀ — ỨNG DỤNG LIVE TƯƠNG TÁC MÀN HÌNH DỌC 9:16
+     * =========================================================================
+     */
 
-    const DEFAULT_GIFTS = [
-      { id: 'rose', icon: '🌹', name: 'Hoa Hồng', value: 1 },
-      { id: 'tea', icon: '🍵', name: 'Trà Nóng', value: 5 },
-      { id: 'brick', icon: '🧱', name: 'Gạch Đỏ', value: 10 },
-      { id: 'cement', icon: '🏗️', name: 'Xi Măng', value: 30 },
-      { id: 'wood', icon: '🪵', name: 'Gỗ Lim', value: 50 },
-      { id: 'tile', icon: '🏮', name: 'Ngói Mới', value: 100 },
-      { id: 'feast', icon: '🍲', name: 'Mâm Cơm', value: 200 },
-      { id: 'gold', icon: '🏆', name: 'Đại Cát', value: 500 }
+    const STORAGE_KEY = 'giup_lao_xay_nha_v3_state';
+
+    const HOUSE_TIERS = [
+      { level: 1, label: 'Nhà cấp 1/5', goal: 20000, nextTier: 2 },
+      { level: 2, label: 'Nhà cấp 2/5', goal: 45000, nextTier: 3 },
+      { level: 3, label: 'Nhà cấp 3/5', goal: 80000, nextTier: 4 },
+      { level: 4, label: 'Nhà cấp 4/5', goal: 130000, nextTier: 5 },
+      { level: 5, label: 'Nhà cấp 5/5', goal: 200000, nextTier: 5 }
     ];
 
-    let state = {
-      buildScore: 0,
-      tiers: [...DEFAULT_TIERS],
-      gifts: JSON.parse(JSON.stringify(DEFAULT_GIFTS)),
-      bridgeUrl: DEFAULT_BRIDGE_URL,
-      tiktokId: DEFAULT_TIKTOK_ID,
-      musicEnabled: true,
-      voiceEnabled: true,
-      audioEnabled: true
-    };
+    const INITIAL_GIFTS = [
+      { id: 'mua-rau', icon: '🥬', name: 'Mua rau', coins: 50, effect: 'food', speech: 'Cảm ơn {name} mua rau xanh cho lão, bữa cơm thêm ngon! Giúp lão xây nhà nhé!' },
+      { id: 'mua-banh', icon: '🥮', name: 'Mua bánh', coins: 100, effect: 'food', speech: 'Cảm ơn {name} gửi bánh cho lão! Giúp lão xây nhà nhé!' },
+      { id: 'vat-lieu', icon: '🧱', name: 'Vật liệu', coins: 500, effect: 'build', speech: 'Cảm ơn {name}, có gạch có ngói là lão yên tâm rồi! Giúp lão xây nhà nhé!' },
+      { id: 'cho-sua', icon: '🐕', name: 'Chó sủa', coins: 20, effect: 'bark', speech: 'Gâu gâu! Cảm ơn {name} gọi cún canh sân! Giúp lão xây nhà nhé!' },
+      { id: 'banh', icon: '🍞', name: 'Bánh', coins: 80, effect: 'food', speech: 'Cảm ơn {name} tặng bánh cho lão! Giúp lão xây nhà nhé!' },
+      { id: 'ngoi-cung', icon: '🏠', name: 'Ngói cung', coins: 1000, effect: 'build', speech: 'Cảm ơn {name} cúng ngói lợp mái cho lão! Giúp lão xây nhà nhé!' },
+      { id: 'thoi-tiet', icon: '⛅', name: 'Thời tiết', coins: 150, effect: 'coins', speech: 'Cảm ơn {name} mang nắng đẹp cho lão! Giúp lão xây nhà nhé!' },
+      { id: 'gia-lon', icon: '💰', name: 'Giá lớn', coins: 2000, effect: 'coins', speech: 'Cảm ơn {name} tặng {coins} xu lớn cho lão! Giúp lão xây nhà nhé!' },
+      { id: 'live', icon: '📺', name: 'Live', coins: 100, effect: 'coins', speech: 'Cảm ơn {name} ghé xem live ủng hộ lão! Giúp lão xây nhà nhé!' },
+      { id: 'don-ca', icon: '🎶', name: 'Đờn ca', coins: 250, effect: 'music', speech: 'Cảm ơn {name} gửi tiếng đờn ca rộn ràng! Giúp lão xây nhà nhé!' },
+      { id: 'len-cap-nha', icon: '⬆️', name: 'Lên cấp nhà', coins: 3000, effect: 'build', speech: 'Cảm ơn {name} tiếp sức lên cấp nhà cho lão! Giúp lão xây nhà nhé!' },
+      { id: 'bao', icon: '⛈️', name: 'Bão', coins: 300, effect: 'storm', speech: 'Cảm ơn {name} nhắc lão che chắn giữa cơn bão! Giúp lão xây nhà nhé!' },
+      { id: 'hoi-ong', icon: '👴', name: 'Hỏi ông', coins: 60, effect: 'coins', speech: 'Cảm ơn {name} đã hỏi thăm lão! Giúp lão xây nhà nhé!' },
+      { id: 'nem-da', icon: '🪨', name: 'Ném đá', coins: 10, effect: 'throw', speech: 'Cảm ơn {name} dằn nền móng cho lão! Giúp lão xây nhà nhé!' },
+      { id: 'sua', icon: '🥛', name: 'Sữa', coins: 120, effect: 'food', speech: 'Cảm ơn {name} gửi sữa cho lão! Giúp lão xây nhà nhé!' }
+    ];
 
-    function sanitizeNoCoinWord(text) {
-      if (!text) return '';
-      return String(text)
-        .replace(/\bxu\b/gi, '')
-        .replace(/\s{2,}/g, ' ')
-        .trim();
-    }
+    const INITIAL_LEADERBOARD = [
+      { name: 'Pnhk', coins: 18400, color: '#f43f5e' },
+      { name: 'Châu', coins: 12400, color: '#38bdf8' },
+      { name: 'Gia Hân', coins: 7600, color: '#f59e0b' },
+      { name: 'Dolly Queen', coins: 7100, color: '#a855f7' },
+      { name: 'Linh Ye', coins: 7000, color: '#10b981' }
+    ];
 
-    function loadState() {
+    const MOCK_VIEWERS = ['Ebenhyý', 'Thu hang', 'Hoà...', 'Minh Anh', 'Quốc Bảo', 'Ngọc Mai', 'Tuấn Vũ', 'Lan Chi'];
+    const MOCK_COMMENTS = [
+      'Cố lên lão ơi, giúp lão xây nhà nhé!',
+      'Gửi gạch ngói cho lão cất nhà nè!',
+      'Khung cảnh sân tre bình yên quá!',
+      'Chúc lão thật nhiều sức khỏe!'
+    ];
+
+    // Bộ nhớ dự phòng khi localStorage bị chặn trong môi trường sandbox/iframe
+    let memoryFallbackStorage = null;
+
+    function safeStorageGet(key) {
       try {
-        const raw = localStorage.getItem(STORAGE_KEY);
-        if (!raw) return;
-        const parsed = JSON.parse(raw);
-        if (typeof parsed.buildScore === 'number' && parsed.buildScore >= 0) {
-          state.buildScore = parsed.buildScore;
+        if (window.localStorage) {
+          return window.localStorage.getItem(key);
         }
-        if (Array.isArray(parsed.tiers) && parsed.tiers.length === 5) {
-          state.tiers = parsed.tiers.map((v, i) => Math.max(100, Number(v) || DEFAULT_TIERS[i]));
-        }
-        if (Array.isArray(parsed.gifts) && parsed.gifts.length > 0) {
-          state.gifts = parsed.gifts.map((g, i) => ({
-            id: g.id || `gift_${i}`,
-            icon: g.icon || '🎁',
-            name: sanitizeNoCoinWord(g.name) || `Quà ${i + 1}`,
-            value: Math.max(1, Number(g.value) || 1)
-          }));
-        }
-        if (typeof parsed.bridgeUrl === 'string' && parsed.bridgeUrl.trim()) {
-          state.bridgeUrl = parsed.bridgeUrl.trim();
-        }
-        if (typeof parsed.tiktokId === 'string' && parsed.tiktokId.trim()) {
-          state.tiktokId = parsed.tiktokId.trim();
-        }
-        if (typeof parsed.musicEnabled === 'boolean') {
-          state.musicEnabled = parsed.musicEnabled;
-        }
-        if (typeof parsed.voiceEnabled === 'boolean') {
-          state.voiceEnabled = parsed.voiceEnabled;
-        }
-      } catch (e) {
-        // Bỏ qua lỗi đọc localStorage
+      } catch (err) {
+        // Bỏ qua lỗi bảo mật của localStorage
       }
+      return memoryFallbackStorage;
     }
 
-    function saveState() {
+    function safeStorageSet(key, value) {
+      memoryFallbackStorage = value;
       try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-      } catch (e) {
+        if (window.localStorage) {
+          window.localStorage.setItem(key, value);
+        }
+      } catch (err) {
         // Bỏ qua lỗi ghi localStorage
       }
     }
 
-    function formatNumber(num) {
-      return Math.round(num).toLocaleString('vi-VN');
-    }
-
-    /* =========================================================================
-       2. GIỌNG NÓI TIẾNG VIỆT (SPEECHSYNTHESIS) & ÂM THANH NGŨ CUNG
-       ========================================================================= */
-    function speakVietnamese(rawText) {
-      if (!state.voiceEnabled || !state.audioEnabled) return;
-      if (!('speechSynthesis' in window)) return;
-      try {
-        const cleanText = sanitizeNoCoinWord(rawText);
-        if (!cleanText) return;
-        window.speechSynthesis.cancel();
-        const utter = new SpeechSynthesisUtterance(cleanText);
-        utter.lang = 'vi-VN';
-        utter.rate = 1.03;
-        utter.pitch = 1.0;
-
-        const voices = window.speechSynthesis.getVoices();
-        const viVoice = voices.find((v) => v.lang && v.lang.toLowerCase().includes('vi'));
-        if (viVoice) utter.voice = viVoice;
-
-        window.speechSynthesis.speak(utter);
-      } catch (e) {
-        // Bỏ qua nếu trình duyệt chặn phát giọng nói
-      }
-    }
-
-    if ('speechSynthesis' in window) {
-      window.speechSynthesis.onvoiceschanged = () => {
-        window.speechSynthesis.getVoices();
-      };
-    }
-
-    let audioCtx = null;
-    let bgmTimer = null;
-    let pentatonicStep = 0;
-    const PENTATONIC_FREQS = [261.63, 293.66, 329.63, 392.00, 440.00, 523.25, 440.00, 392.00, 329.63, 293.66];
-
-    function ensureAudioContext() {
-      try {
-        if (!audioCtx) {
-          const Ctx = window.AudioContext || window.webkitAudioContext;
-          if (Ctx) audioCtx = new Ctx();
-        }
-        if (audioCtx && audioCtx.state === 'suspended') {
-          audioCtx.resume().catch(() => {});
-        }
-      } catch (e) {}
-    }
-
-    function playPluckNote(freq, duration = 0.45, volume = 0.035) {
-      if (!state.audioEnabled) return;
-      ensureAudioContext();
-      if (!audioCtx) return;
-      try {
-        const now = audioCtx.currentTime;
-        const osc = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
-        osc.type = 'triangle';
-        osc.frequency.setValueAtTime(freq, now);
-
-        gain.gain.setValueAtTime(0.0001, now);
-        gain.gain.linearRampToValueAtTime(volume, now + 0.03);
-        gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
-
-        osc.connect(gain);
-        gain.connect(audioCtx.destination);
-        osc.start(now);
-        osc.stop(now + duration + 0.02);
-      } catch (e) {}
-    }
-
-    function startBackgroundMusic() {
-      if (bgmTimer) return;
-      bgmTimer = setInterval(() => {
-        if (!state.audioEnabled || !state.musicEnabled) return;
-        const freq = PENTATONIC_FREQS[pentatonicStep % PENTATONIC_FREQS.length];
-        pentatonicStep++;
-        playPluckNote(freq, 0.55, 0.025);
-      }, 650);
-    }
-
-    function playGiftSound(isBig) {
-      if (!state.audioEnabled) return;
-      playPluckNote(523.25, 0.25, 0.07);
-      setTimeout(() => playPluckNote(659.25, 0.25, 0.07), 90);
-      setTimeout(() => playPluckNote(783.99, 0.35, 0.08), 180);
-      if (isBig) {
-        setTimeout(() => playPluckNote(1046.5, 0.5, 0.09), 270);
-      }
-    }
-
-    /* =========================================================================
-       3. THANG NHÀ 5 CẤP & CẬP NHẬT HUD
-       ========================================================================= */
-    function getHouseProgress() {
-      const score = state.buildScore;
-      const tiers = state.tiers;
-      let level = 1;
-      let prevCap = 0;
-      let nextCap = tiers[0];
-
-      if (score >= tiers[4]) {
-        level = 5;
-        prevCap = tiers[3];
-        nextCap = tiers[4];
-      } else if (score >= tiers[3]) {
-        level = 5;
-        prevCap = tiers[3];
-        nextCap = tiers[4];
-      } else if (score >= tiers[2]) {
-        level = 4;
-        prevCap = tiers[2];
-        nextCap = tiers[3];
-      } else if (score >= tiers[1]) {
-        level = 3;
-        prevCap = tiers[1];
-        nextCap = tiers[2];
-      } else if (score >= tiers[0]) {
-        level = 2;
-        prevCap = tiers[0];
-        nextCap = tiers[1];
-      } else {
-        level = 1;
-        prevCap = 0;
-        nextCap = tiers[0];
-      }
-
-      const span = Math.max(1, nextCap - prevCap);
-      const rawPct = score >= tiers[4] ? 100 : Math.min(100, Math.max(0, ((score - prevCap) / span) * 100));
+    function defaultAppState() {
       return {
-        level,
-        nextCap,
-        percent: Math.round(rawPct)
+        totalCoins: 8700,
+        liveMode: 'test', // 'test' | 'live'
+        testSetupSaved: false,
+        testConfig: {
+          viewerName: 'Ebenhyý',
+          giftId: 'vat-lieu',
+          coins: '',
+          comment: 'Cố lên lão ơi, giúp lão xây nhà nhé!'
+        },
+        gifts: JSON.parse(JSON.stringify(INITIAL_GIFTS)),
+        leaderboard: JSON.parse(JSON.stringify(INITIAL_LEADERBOARD)),
+        currentSpeech: '« Cảm ơn Ebenhyý, có gạch có ngói là lão yên tâm rồi! »',
+        autoLiveStream: false,
+        liveRoomTag: '',
+        tiktokLiveId: '',
+        tiktokBridgeUrl: '',
+        settings: {
+          musicEnabled: true,
+          musicVol: 0.32,
+          sfxVol: 0.75,
+          voiceEnabled: true,
+          readComments: true,
+          voiceName: '',
+          voiceRate: 1.05
+        }
       };
     }
 
-    function updateHud() {
-      const info = getHouseProgress();
-      document.getElementById('levelBadge').textContent = `Cấp ${info.level}/5`;
-      document.getElementById('currentScoreText').textContent = formatNumber(state.buildScore);
-      document.getElementById('targetScoreText').textContent = `/ ${formatNumber(info.nextCap)} xây nhà`;
-      document.getElementById('progressFill').style.width = `${info.percent}%`;
-      document.getElementById('progressPercent').textContent = `${info.percent}%`;
+    function readSavedState() {
+      const base = defaultAppState();
+      try {
+        const raw = safeStorageGet(STORAGE_KEY);
+        if (!raw) return base;
+        const parsed = JSON.parse(raw);
+        if (!parsed || typeof parsed !== 'object') return base;
+        return {
+          totalCoins: typeof parsed.totalCoins === 'number' && !isNaN(parsed.totalCoins) ? Math.max(0, parsed.totalCoins) : base.totalCoins,
+          liveMode: parsed.liveMode === 'live' ? 'live' : 'test',
+          testSetupSaved: !!parsed.testSetupSaved,
+          testConfig: { ...base.testConfig, ...(parsed.testConfig && typeof parsed.testConfig === 'object' ? parsed.testConfig : {}) },
+          gifts: Array.isArray(parsed.gifts) && parsed.gifts.length > 0 ? parsed.gifts : base.gifts,
+          leaderboard: Array.isArray(parsed.leaderboard) && parsed.leaderboard.length > 0 ? parsed.leaderboard : base.leaderboard,
+          currentSpeech: typeof parsed.currentSpeech === 'string' && parsed.currentSpeech.trim() ? parsed.currentSpeech : base.currentSpeech,
+          autoLiveStream: !!parsed.autoLiveStream,
+          liveRoomTag: typeof parsed.liveRoomTag === 'string' ? parsed.liveRoomTag : '',
+          tiktokLiveId: typeof parsed.tiktokLiveId === 'string' ? parsed.tiktokLiveId : '',
+          tiktokBridgeUrl: typeof parsed.tiktokBridgeUrl === 'string' ? parsed.tiktokBridgeUrl : '',
+          settings: { ...base.settings, ...(parsed.settings && typeof parsed.settings === 'object' ? parsed.settings : {}) }
+        };
+      } catch (err) {
+        return base;
+      }
     }
 
-    function escapeHtml(str) {
-      return String(str)
+    let state = readSavedState();
+
+    function persistState() {
+      try {
+        safeStorageSet(STORAGE_KEY, JSON.stringify(state));
+      } catch (err) {
+        // Bỏ qua lỗi tuần tự hóa trạng thái
+      }
+    }
+
+    function escapeText(str) {
+      return String(str || '')
         .replace(/&/g, '&amp;')
         .replace(/</g, '&lt;')
         .replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;');
     }
 
-    function pushFloatingAlert(text) {
-      const container = document.getElementById('floatingAlerts');
-      const banner = document.createElement('div');
-      banner.className = 'float-banner stroke-shadow';
-      banner.textContent = sanitizeNoCoinWord(text);
-      container.appendChild(banner);
-      while (container.children.length > 3) {
-        container.removeChild(container.firstChild);
+    function formatShortCoins(num) {
+      const val = Math.max(0, Math.round(Number(num) || 0));
+      if (val >= 1000) {
+        const k = (val / 1000).toFixed(1).replace('.', ',');
+        return k.endsWith(',0') ? `${Math.round(val / 1000)}k` : `${k}k`;
       }
-      setTimeout(() => {
-        if (banner.parentNode) banner.parentNode.removeChild(banner);
-      }, 3050);
+      return val.toLocaleString('vi-VN');
     }
 
-    function pushFeedMessage(user, message) {
-      const feed = document.getElementById('feedBox');
-      const item = document.createElement('div');
-      item.className = 'feed-item';
-      const cleanUser = sanitizeNoCoinWord(user || 'Khán giả');
-      const cleanMsg = sanitizeNoCoinWord(message || '');
-      item.innerHTML = `<strong>${escapeHtml(cleanUser)}:</strong> ${escapeHtml(cleanMsg)}`;
-      feed.appendChild(item);
-      while (feed.children.length > 4) {
-        feed.removeChild(feed.firstChild);
+    function computeHouseInfo(coins) {
+      const safeCoins = Math.max(0, Number(coins) || 0);
+      let current = HOUSE_TIERS[HOUSE_TIERS.length - 1];
+      let floorCoins = 0;
+
+      for (let i = 0; i < HOUSE_TIERS.length; i++) {
+        if (safeCoins < HOUSE_TIERS[i].goal) {
+          current = HOUSE_TIERS[i];
+          floorCoins = i === 0 ? 0 : HOUSE_TIERS[i - 1].goal;
+          break;
+        }
+        floorCoins = HOUSE_TIERS[i].goal;
+      }
+
+      const span = Math.max(1, current.goal - floorCoins);
+      const pct = Math.max(0, Math.min(100, Math.round(((safeCoins - floorCoins) / span) * 100)));
+      return {
+        level: current.level,
+        label: current.label,
+        goal: current.goal,
+        nextTier: current.nextTier,
+        pct
+      };
+    }
+
+    let toastTimer = null;
+    function notifyToast(msg) {
+      const wrap = document.getElementById('appToast');
+      const label = document.getElementById('appToastMsg');
+      if (!wrap || !label) return;
+      label.textContent = String(msg || '');
+      wrap.classList.remove('opacity-0', '-translate-y-3');
+      wrap.classList.add('opacity-100', 'translate-y-0');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => {
+        wrap.classList.remove('opacity-100', 'translate-y-0');
+        wrap.classList.add('opacity-0', '-translate-y-3');
+      }, 2400);
+    }
+
+    /**
+     * =========================================================================
+     * ÂM THANH WEB AUDIO API (NHẠC NỀN NGŨ CUNG & HIỆU ỨNG QUÀ / SỰ KIỆN)
+     * =========================================================================
+     */
+    class FolkAudioEngine {
+      constructor() {
+        this.ctx = null;
+        this.loopId = null;
+        this.noteIdx = 0;
+        this.scale = [293.66, 329.63, 392.00, 440.00, 523.25, 587.33, 440.00, 392.00];
+      }
+
+      unlock() {
+        try {
+          if (!this.ctx) {
+            const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+            if (AudioContextClass) {
+              this.ctx = new AudioContextClass();
+            }
+          }
+          if (this.ctx && this.ctx.state === 'suspended') {
+            const p = this.ctx.resume();
+            if (p && typeof p.catch === 'function') {
+              p.catch(() => {});
+            }
+          }
+        } catch (err) {
+          this.ctx = null;
+        }
+      }
+
+      startBgMusic() {
+        this.stopBgMusic();
+        if (!state.settings.musicEnabled) return;
+
+        this.loopId = setInterval(() => {
+          if (!state.settings.musicEnabled || state.settings.musicVol <= 0.01) return;
+          this.unlock();
+          if (!this.ctx || this.ctx.state === 'closed') return;
+
+          try {
+            const now = this.ctx.currentTime;
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(this.scale[this.noteIdx % this.scale.length], now);
+            this.noteIdx++;
+
+            const peak = Math.max(0.0002, 0.055 * state.settings.musicVol);
+            gain.gain.setValueAtTime(0.0001, now);
+            gain.gain.exponentialRampToValueAtTime(peak, now + 0.06);
+            gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.5);
+
+            osc.connect(gain);
+            gain.connect(this.ctx.destination);
+            osc.start(now);
+            osc.stop(now + 0.52);
+          } catch (err) {
+            // Bỏ qua lỗi nhịp nhạc khi trình duyệt khóa âm thanh
+          }
+        }, 560);
+      }
+
+      stopBgMusic() {
+        if (this.loopId) {
+          clearInterval(this.loopId);
+          this.loopId = null;
+        }
+      }
+
+      playTone(startFreq, endFreq, dur, waveType, gainScale, delaySec = 0) {
+        if (state.settings.sfxVol <= 0.01) return;
+        this.unlock();
+        if (!this.ctx || this.ctx.state === 'closed') return;
+
+        try {
+          const t = this.ctx.currentTime + delaySec;
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = waveType;
+          osc.frequency.setValueAtTime(startFreq, t);
+          if (endFreq) osc.frequency.exponentialRampToValueAtTime(Math.max(25, endFreq), t + dur);
+
+          const amp = Math.min(0.42, gainScale * state.settings.sfxVol);
+          gain.gain.setValueAtTime(0.0001, t);
+          gain.gain.linearRampToValueAtTime(amp, t + 0.02);
+          gain.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.start(t);
+          osc.stop(t + dur + 0.02);
+        } catch (err) {
+          // Bỏ qua lỗi hiệu ứng âm thanh
+        }
+      }
+
+      playGiftSfx(effect) {
+        switch (effect) {
+          case 'bark':
+            this.playTone(270, 145, 0.11, 'sawtooth', 0.24, 0);
+            this.playTone(305, 155, 0.12, 'sawtooth', 0.24, 0.16);
+            break;
+          case 'storm':
+            this.playTone(120, 44, 0.62, 'sawtooth', 0.28, 0);
+            this.playTone(420, 200, 0.4, 'sine', 0.12, 0.08);
+            break;
+          case 'build':
+            this.playTone(185, 95, 0.12, 'triangle', 0.26, 0);
+            this.playTone(587.33, 880, 0.22, 'sine', 0.18, 0.1);
+            this.playTone(880, 1174.66, 0.26, 'sine', 0.18, 0.2);
+            break;
+          case 'music':
+            this.playTone(440, 440, 0.2, 'triangle', 0.2, 0);
+            this.playTone(554.37, 554.37, 0.2, 'triangle', 0.2, 0.12);
+            this.playTone(659.25, 659.25, 0.28, 'triangle', 0.22, 0.24);
+            break;
+          case 'throw':
+            this.playTone(520, 180, 0.15, 'triangle', 0.16, 0);
+            break;
+          case 'food':
+          case 'coins':
+          default:
+            this.playTone(987.77, 1318.51, 0.16, 'sine', 0.2, 0);
+            this.playTone(1318.51, 1760, 0.24, 'sine', 0.2, 0.11);
+            break;
+        }
       }
     }
 
-    /* =========================================================================
-       4. CANVAS SÂN LÀNG: NGÔI NHÀ Ở GIỮA, CỤ GIÀ CHIẾU CÓI, DÂN LÀNG & KHÁN GIẢ
-       ========================================================================= */
-    const canvas = document.getElementById('villageCanvas');
-    const ctx = canvas.getContext('2d');
-    let viewW = 390;
-    let viewH = 844;
-    let animTime = 0;
-    let elderThankTimer = 0;
-    let houseSparkleTimer = 0;
+    const folkAudio = new FolkAudioEngine();
 
-    const walkers = [];
-    const particles = [];
-    const VISITOR_COLORS = ['#ef4444', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4'];
+    /**
+     * =========================================================================
+     * GIỌNG ĐỌC TIẾNG VIỆT (WEB SPEECH SYNTHESIS + WATCHDOG & FALLBACK AN TOÀN)
+     * =========================================================================
+     */
+    let systemVoices = [];
+    const speakQueue = [];
+    let isSpeakingNow = false;
+    let speechWatchdog = null;
+    let speechPollTimer = null;
+    let speechUnavailableNotified = false;
 
-    function resizeCanvas() {
-      const rect = canvas.parentElement.getBoundingClientRect();
-      const dpr = Math.min(window.devicePixelRatio || 1, 2);
-      viewW = Math.max(280, rect.width);
-      viewH = Math.max(500, rect.height);
-      canvas.width = Math.round(viewW * dpr);
-      canvas.height = Math.round(viewH * dpr);
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    function hasSpeechSynthesisSupport() {
+      try {
+        return typeof window !== 'undefined' &&
+          'speechSynthesis' in window &&
+          typeof window.SpeechSynthesisUtterance === 'function';
+      } catch (err) {
+        return false;
+      }
     }
 
-    window.addEventListener('resize', resizeCanvas);
+    function unlockSpeechEngine() {
+      if (!hasSpeechSynthesisSupport()) return;
+      try {
+        if (window.speechSynthesis.paused) {
+          window.speechSynthesis.resume();
+        }
+        loadSystemVoices();
+      } catch (err) {
+        // Bỏ qua lỗi đánh thức speechSynthesis
+      }
+    }
 
-    function spawnVisitorWalker(name, labelText, isGift) {
-      const fromLeft = Math.random() < 0.5;
-      const startX = fromLeft ? -35 : viewW + 35;
-      const targetX = fromLeft
-        ? viewW * (0.22 + Math.random() * 0.14)
-        : viewW * (0.64 + Math.random() * 0.14);
-      const yPos = viewH * (0.63 + Math.random() * 0.08);
-      const color = VISITOR_COLORS[Math.floor(Math.random() * VISITOR_COLORS.length)];
+    function loadSystemVoices() {
+      if (!hasSpeechSynthesisSupport()) return;
+      try {
+        const list = window.speechSynthesis.getVoices();
+        if (Array.isArray(list) && list.length > 0) {
+          systemVoices = list;
+        }
+      } catch (err) {
+        // Bỏ qua lỗi lấy danh sách giọng
+      }
 
-      walkers.push({
-        name: sanitizeNoCoinWord(name || 'Khán giả'),
-        label: sanitizeNoCoinWord(labelText || ''),
-        isGift,
-        x: startX,
-        y: yPos,
-        targetX,
-        color,
-        state: 'walkIn',
-        stayTimer: 3.5,
-        phase: Math.random() * Math.PI * 2
+      const picker = document.getElementById('voicePickerSelect');
+      if (!picker) return;
+
+      const selected = state.settings.voiceName || '';
+      picker.innerHTML = '<option value="">Tự động chọn giọng tiếng Việt</option>';
+
+      const ordered = [...systemVoices].sort((a, b) => {
+        const aVi = a && a.lang && a.lang.toLowerCase().startsWith('vi') ? -1 : 1;
+        const bVi = b && b.lang && b.lang.toLowerCase().startsWith('vi') ? -1 : 1;
+        return aVi - bVi;
       });
 
-      if (walkers.length > 6) {
-        walkers.shift();
-      }
-    }
-
-    function spawnCelebrationParticles(x, y, emojiList) {
-      for (let i = 0; i < 12; i++) {
-        const angle = -Math.PI * 0.15 - Math.random() * Math.PI * 0.7;
-        const speed = 45 + Math.random() * 85;
-        particles.push({
-          x: x + (Math.random() - 0.5) * 40,
-          y: y + (Math.random() - 0.5) * 20,
-          vx: Math.cos(angle) * speed,
-          vy: Math.sin(angle) * speed,
-          life: 1.2 + Math.random() * 0.6,
-          maxLife: 1.6,
-          symbol: emojiList[i % emojiList.length]
-        });
-      }
-    }
-
-    function drawCloud(cx, cy, scale) {
-      ctx.save();
-      ctx.translate(cx, cy);
-      ctx.scale(scale, scale);
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
-      ctx.beginPath();
-      ctx.arc(0, 0, 16, 0, Math.PI * 2);
-      ctx.arc(15, -4, 20, 0, Math.PI * 2);
-      ctx.arc(32, 0, 15, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.restore();
-    }
-
-    function drawBambooCluster(bx, by, t) {
-      ctx.save();
-      const sway = Math.sin(t * 1.8) * 3;
-      for (let i = -2; i <= 2; i++) {
-        const ox = bx + i * 8;
-        const topX = ox + sway + i * 2;
-        const topY = by - 78 - Math.abs(i) * 6;
-        ctx.strokeStyle = i % 2 === 0 ? '#15803d' : '#166534';
-        ctx.lineWidth = 4;
-        ctx.beginPath();
-        ctx.moveTo(ox, by);
-        ctx.quadraticCurveTo(ox + sway * 0.4, by - 40, topX, topY);
-        ctx.stroke();
-
-        ctx.fillStyle = '#22c55e';
-        ctx.beginPath();
-        ctx.ellipse(topX + 8, topY + 8, 12, 4, 0.3, 0, Math.PI * 2);
-        ctx.ellipse(topX - 8, topY + 14, 11, 3.5, -0.35, 0, Math.PI * 2);
-        ctx.fill();
-      }
-      ctx.restore();
-    }
-
-    function drawBackgroundScene(w, h, t) {
-      const skyGrad = ctx.createLinearGradient(0, 0, 0, h * 0.48);
-      skyGrad.addColorStop(0, '#38bdf8');
-      skyGrad.addColorStop(0.65, '#bae6fd');
-      skyGrad.addColorStop(1, '#fef3c7');
-      ctx.fillStyle = skyGrad;
-      ctx.fillRect(0, 0, w, h * 0.5);
-
-      ctx.fillStyle = 'rgba(254, 240, 138, 0.85)';
-      ctx.beginPath();
-      ctx.arc(w * 0.82, h * 0.18, 26, 0, Math.PI * 2);
-      ctx.fill();
-
-      drawCloud((t * 10) % (w + 120) - 60, h * 0.16, 0.9);
-      drawCloud(((t * 7) + w * 0.5) % (w + 140) - 70, h * 0.22, 0.75);
-
-      ctx.fillStyle = '#6ee7b7';
-      ctx.beginPath();
-      ctx.moveTo(0, h * 0.44);
-      ctx.quadraticCurveTo(w * 0.25, h * 0.31, w * 0.52, h * 0.43);
-      ctx.quadraticCurveTo(w * 0.78, h * 0.30, w, h * 0.42);
-      ctx.lineTo(w, h * 0.5);
-      ctx.lineTo(0, h * 0.5);
-      ctx.closePath();
-      ctx.fill();
-
-      drawBambooCluster(w * 0.08, h * 0.44, t);
-      drawBambooCluster(w * 0.91, h * 0.44, t + 1.5);
-
-      const yardGrad = ctx.createLinearGradient(0, h * 0.43, 0, h);
-      yardGrad.addColorStop(0, '#d9a76a');
-      yardGrad.addColorStop(0.45, '#c68b4b');
-      yardGrad.addColorStop(1, '#9a632c');
-      ctx.fillStyle = yardGrad;
-      ctx.fillRect(0, h * 0.43, w, h * 0.57);
-
-      ctx.fillStyle = '#4d7c0f';
-      ctx.fillRect(0, h * 0.425, w, 8);
-
-      // Lối đi từ cổng sân vào
-      ctx.fillStyle = 'rgba(254, 243, 199, 0.22)';
-      ctx.beginPath();
-      ctx.moveTo(w * 0.42, h * 0.62);
-      ctx.lineTo(w * 0.58, h * 0.62);
-      ctx.lineTo(w * 0.74, h * 0.85);
-      ctx.lineTo(w * 0.26, h * 0.85);
-      ctx.closePath();
-      ctx.fill();
-    }
-
-    function drawCenterHouse(w, h, level) {
-      const hx = w * 0.50;
-      const hy = h * 0.44;
-      ctx.save();
-
-      if (houseSparkleTimer > 0) {
-        ctx.fillStyle = `rgba(253, 224, 71, ${Math.min(0.45, houseSparkleTimer * 0.35)})`;
-        ctx.beginPath();
-        ctx.ellipse(hx, hy - 10, 84, 56, 0, 0, Math.PI * 2);
-        ctx.fill();
-      }
-
-      // Nền móng đá giữa sân
-      ctx.fillStyle = '#78716c';
-      ctx.strokeStyle = '#44403c';
-      ctx.lineWidth = 2;
-      ctx.fillRect(hx - 60, hy + 20, 120, 11);
-      ctx.strokeRect(hx - 60, hy + 20, 120, 11);
-
-      if (level === 1) {
-        ctx.fillStyle = '#92400e';
-        ctx.fillRect(hx - 50, hy - 26, 8, 46);
-        ctx.fillRect(hx + 42, hy - 26, 8, 46);
-        ctx.fillRect(hx - 54, hy - 30, 108, 7);
-
-        ctx.fillStyle = '#dc6b4a';
-        ctx.strokeStyle = '#7c2d12';
-        ctx.lineWidth = 1.6;
-        ctx.fillRect(hx - 48, hy + 2, 96, 18);
-        ctx.strokeRect(hx - 48, hy + 2, 96, 18);
-
-        ctx.beginPath();
-        ctx.moveTo(hx - 48, hy + 11);
-        ctx.lineTo(hx + 48, hy + 11);
-        ctx.stroke();
-      } else {
-        ctx.fillStyle = '#dc6b4a';
-        ctx.strokeStyle = '#7c2d12';
-        ctx.lineWidth = 2;
-        ctx.fillRect(hx - 52, hy - 30, 104, 50);
-        ctx.strokeRect(hx - 52, hy - 30, 104, 50);
-
-        ctx.fillStyle = '#78350f';
-        ctx.fillRect(hx - 13, hy - 6, 26, 26);
-        ctx.strokeRect(hx - 13, hy - 6, 26, 26);
-
-        if (level === 2) {
-          ctx.fillStyle = '#a16207';
-          ctx.beginPath();
-          ctx.moveTo(hx - 58, hy - 30);
-          ctx.lineTo(hx + 58, hy - 30);
-          ctx.lineTo(hx + 52, hy - 38);
-          ctx.lineTo(hx - 52, hy - 38);
-          ctx.closePath();
-          ctx.fill();
-          ctx.stroke();
-        }
-
-        if (level >= 3) {
-          ctx.fillStyle = '#b91c1c';
-          ctx.strokeStyle = '#7f1d1d';
-          ctx.lineWidth = 2;
-          ctx.beginPath();
-          ctx.moveTo(hx - 64, hy - 30);
-          ctx.lineTo(hx, hy - 68);
-          ctx.lineTo(hx + 64, hy - 30);
-          ctx.closePath();
-          ctx.fill();
-          ctx.stroke();
-
-          ctx.strokeStyle = '#fcd34d';
-          ctx.lineWidth = 2.5;
-          ctx.beginPath();
-          ctx.moveTo(hx - 12, hy - 62);
-          ctx.lineTo(hx, hy - 68);
-          ctx.lineTo(hx + 12, hy - 62);
-          ctx.stroke();
-        }
-
-        if (level >= 4) {
-          ctx.fillStyle = '#fef08a';
-          ctx.strokeStyle = '#78350f';
-          ctx.lineWidth = 1.8;
-          ctx.fillRect(hx - 40, hy - 16, 17, 16);
-          ctx.strokeRect(hx - 40, hy - 16, 17, 16);
-          ctx.fillRect(hx + 23, hy - 16, 17, 16);
-          ctx.strokeRect(hx + 23, hy - 16, 17, 16);
-        }
-
-        if (level >= 5) {
-          ctx.fillStyle = '#ea580c';
-          ctx.strokeStyle = '#7c2d12';
-          ctx.lineWidth = 2;
-          ctx.fillRect(hx + 52, hy - 6, 28, 26);
-          ctx.strokeRect(hx + 52, hy - 6, 28, 26);
-
-          ctx.fillStyle = '#991b1b';
-          ctx.beginPath();
-          ctx.moveTo(hx + 50, hy - 6);
-          ctx.lineTo(hx + 66, hy - 22);
-          ctx.lineTo(hx + 83, hy - 6);
-          ctx.closePath();
-          ctx.fill();
-          ctx.stroke();
-
-          ctx.fillStyle = '#ef4444';
-          ctx.beginPath();
-          ctx.arc(hx - 24, hy - 24, 5, 0, Math.PI * 2);
-          ctx.arc(hx + 24, hy - 24, 5, 0, Math.PI * 2);
-          ctx.fill();
-        }
-      }
-      ctx.restore();
-    }
-
-    function drawElderOnMat(w, h, t) {
-      const ex = w * 0.50;
-      const ey = h * 0.56;
-      ctx.save();
-
-      ctx.fillStyle = '#fde68a';
-      ctx.strokeStyle = '#b45309';
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.moveTo(ex - 48, ey + 14);
-      ctx.lineTo(ex + 48, ey + 14);
-      ctx.lineTo(ex + 60, ey + 34);
-      ctx.lineTo(ex - 60, ey + 34);
-      ctx.closePath();
-      ctx.fill();
-      ctx.stroke();
-
-      ctx.strokeStyle = '#dc2626';
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.moveTo(ex - 52, ey + 20);
-      ctx.lineTo(ex + 52, ey + 20);
-      ctx.stroke();
-
-      const bowOffset = elderThankTimer > 0 ? Math.sin(t * 14) * 3.5 : Math.sin(t * 2.5) * 1;
-
-      ctx.fillStyle = '#78350f';
-      ctx.beginPath();
-      ctx.ellipse(ex, ey + 11, 18, 15, 0, 0, Math.PI * 2);
-      ctx.fill();
-
-      ctx.fillStyle = '#fed7aa';
-      ctx.beginPath();
-      ctx.arc(ex, ey - 9 + bowOffset, 12, 0, Math.PI * 2);
-      ctx.fill();
-
-      ctx.fillStyle = '#f8fafc';
-      ctx.beginPath();
-      ctx.arc(ex, ey - 13 + bowOffset, 12.5, Math.PI, Math.PI * 2);
-      ctx.fill();
-      ctx.beginPath();
-      ctx.arc(ex, ey - 23 + bowOffset, 5.5, 0, Math.PI * 2);
-      ctx.fill();
-
-      ctx.fillStyle = '#f1f5f9';
-      ctx.beginPath();
-      ctx.moveTo(ex - 5, ey - 2 + bowOffset);
-      ctx.lineTo(ex + 5, ey - 2 + bowOffset);
-      ctx.lineTo(ex, ey + 13 + bowOffset);
-      ctx.closePath();
-      ctx.fill();
-
-      ctx.strokeStyle = '#451a03';
-      ctx.lineWidth = 1.6;
-      ctx.beginPath();
-      ctx.arc(ex - 4, ey - 9 + bowOffset, 2.2, Math.PI, Math.PI * 2);
-      ctx.arc(ex + 4, ey - 9 + bowOffset, 2.2, Math.PI, Math.PI * 2);
-      ctx.stroke();
-
-      ctx.fillStyle = '#fdba74';
-      ctx.beginPath();
-      ctx.ellipse(ex, ey + 5 + bowOffset * 0.6, 6, 4.5, 0, 0, Math.PI * 2);
-      ctx.fill();
-
-      ctx.restore();
-    }
-
-    function drawVillagers(w, h, t) {
-      const helpers = [
-        { x: w * 0.20, y: h * 0.54, shirt: '#0284c7', hat: false, phase: 0.7 },
-        { x: w * 0.80, y: h * 0.54, shirt: '#15803d', hat: true, phase: 0 },
-        { x: w * 0.88, y: h * 0.58, shirt: '#b45309', hat: false, phase: 1.8 }
-      ];
-
-      helpers.forEach((p) => {
-        const bob = Math.sin(t * 4 + p.phase) * 2;
-        ctx.save();
-        ctx.fillStyle = '#292524';
-        ctx.fillRect(p.x - 6, p.y + 12, 5, 13);
-        ctx.fillRect(p.x + 1, p.y + 12, 5, 13);
-
-        ctx.fillStyle = p.shirt;
-        ctx.fillRect(p.x - 9, p.y - 4 + bob, 18, 17);
-
-        ctx.fillStyle = '#fed7aa';
-        ctx.beginPath();
-        ctx.arc(p.x, p.y - 12 + bob, 8, 0, Math.PI * 2);
-        ctx.fill();
-
-        if (p.hat) {
-          ctx.fillStyle = '#fde047';
-          ctx.strokeStyle = '#a16207';
-          ctx.lineWidth = 1.4;
-          ctx.beginPath();
-          ctx.moveTo(p.x - 14, p.y - 14 + bob);
-          ctx.lineTo(p.x, p.y - 25 + bob);
-          ctx.lineTo(p.x + 14, p.y - 14 + bob);
-          ctx.closePath();
-          ctx.fill();
-          ctx.stroke();
-        }
-        ctx.restore();
+      ordered.forEach((v) => {
+        if (!v || !v.name) return;
+        const opt = document.createElement('option');
+        opt.value = v.name;
+        opt.textContent = `${v.name} (${v.lang || 'vi'})`;
+        if (v.name === selected) opt.selected = true;
+        picker.appendChild(opt);
       });
     }
 
-    function updateAndDrawWalkers(dt, t) {
-      for (let i = walkers.length - 1; i >= 0; i--) {
-        const wk = walkers[i];
-        const speed = 75;
+    if (hasSpeechSynthesisSupport()) {
+      loadSystemVoices();
+      try {
+        window.speechSynthesis.onvoiceschanged = loadSystemVoices;
+      } catch (err) {}
+      setTimeout(loadSystemVoices, 400);
+      setTimeout(loadSystemVoices, 1200);
+    }
 
-        if (wk.state === 'walkIn') {
-          const dx = wk.targetX - wk.x;
-          if (Math.abs(dx) <= 3) {
-            wk.x = wk.targetX;
-            wk.state = 'stay';
-          } else {
-            wk.x += Math.sign(dx) * speed * dt;
+    function resetSpeechSlot() {
+      isSpeakingNow = false;
+      if (speechWatchdog) {
+        clearTimeout(speechWatchdog);
+        speechWatchdog = null;
+      }
+      if (speechPollTimer) {
+        clearInterval(speechPollTimer);
+        speechPollTimer = null;
+      }
+      const hintEl = document.getElementById('speechBubbleHint');
+      if (hintEl) hintEl.textContent = 'Chạm để nghe lão cảm ơn';
+    }
+
+    function showVisualSpeechFallback(line) {
+      const hintEl = document.getElementById('speechBubbleHint');
+      if (hintEl) {
+        hintEl.textContent = 'Đang hiển thị lời cảm ơn';
+        setTimeout(() => {
+          if (!isSpeakingNow && hintEl) {
+            hintEl.textContent = 'Chạm để nghe lão cảm ơn';
           }
-        } else if (wk.state === 'stay') {
-          wk.stayTimer -= dt;
-          if (wk.stayTimer <= 0) {
-            wk.state = 'walkOut';
-            wk.exitX = wk.x < viewW * 0.5 ? -45 : viewW + 45;
-          }
-        } else if (wk.state === 'walkOut') {
-          const dx = wk.exitX - wk.x;
-          wk.x += Math.sign(dx) * (speed * 1.15) * dt;
-          if (wk.x < -50 || wk.x > viewW + 50) {
-            walkers.splice(i, 1);
-            continue;
-          }
-        }
-
-        const stepBounce = wk.state === 'stay' ? Math.sin(t * 5 + wk.phase) * 1.5 : Math.abs(Math.sin(t * 11 + wk.phase)) * 3.5;
-
-        ctx.save();
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.25)';
-        ctx.beginPath();
-        ctx.ellipse(wk.x, wk.y + 24, 12, 4, 0, 0, Math.PI * 2);
-        ctx.fill();
-
-        const legSwing = wk.state === 'stay' ? 0 : Math.sin(t * 11 + wk.phase) * 4;
-        ctx.fillStyle = '#1c1917';
-        ctx.fillRect(wk.x - 6 + legSwing, wk.y + 10, 5, 13);
-        ctx.fillRect(wk.x + 1 - legSwing, wk.y + 10, 5, 13);
-
-        ctx.fillStyle = wk.color;
-        ctx.fillRect(wk.x - 9, wk.y - 6 - stepBounce, 18, 17);
-
-        ctx.fillStyle = '#fed7aa';
-        ctx.beginPath();
-        ctx.arc(wk.x, wk.y - 14 - stepBounce, 8.5, 0, Math.PI * 2);
-        ctx.fill();
-
-        const tag = wk.label ? `${wk.name} · ${wk.label}` : wk.name;
-        ctx.font = 'bold 10.5px sans-serif';
-        const textW = Math.min(170, ctx.measureText(tag).width + 14);
-        const boxX = wk.x - textW / 2;
-        const boxY = wk.y - 44 - stepBounce;
-
-        ctx.fillStyle = wk.isGift ? 'rgba(146, 64, 14, 0.92)' : 'rgba(28, 25, 23, 0.88)';
-        ctx.strokeStyle = wk.isGift ? '#fde047' : 'rgba(255, 255, 255, 0.45)';
-        ctx.lineWidth = 1.2;
-        ctx.beginPath();
-        ctx.roundRect(boxX, boxY, textW, 18, 7);
-        ctx.fill();
-        ctx.stroke();
-
-        ctx.fillStyle = '#fffbeb';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(tag, wk.x, boxY + 9, textW - 8);
-        ctx.restore();
+        }, 2600);
+      }
+      if (!speechUnavailableNotified) {
+        speechUnavailableNotified = true;
+        notifyToast(`Lời lão: ${line}`);
       }
     }
 
-    function updateAndDrawParticles(dt) {
-      ctx.save();
-      ctx.font = '18px sans-serif';
-      ctx.textAlign = 'center';
-      for (let i = particles.length - 1; i >= 0; i--) {
-        const p = particles[i];
-        p.x += p.vx * dt;
-        p.y += p.vy * dt;
-        p.vy += 90 * dt;
-        p.life -= dt;
-        if (p.life <= 0) {
-          particles.splice(i, 1);
-          continue;
-        }
-        ctx.globalAlpha = Math.max(0, Math.min(1, p.life / p.maxLife));
-        ctx.fillText(p.symbol, p.x, p.y);
-      }
-      ctx.restore();
-    }
+    function queueVietnameseSpeech(line) {
+      if (!state.settings.voiceEnabled) return;
+      const cleaned = String(line || '').replace(/[«»“”"]/g, '').trim();
+      if (!cleaned) return;
 
-    let lastFrameTime = performance.now();
-    function renderLoop(now) {
-      const dt = Math.min(0.05, (now - lastFrameTime) / 1000);
-      lastFrameTime = now;
-      animTime += dt;
-      if (elderThankTimer > 0) elderThankTimer -= dt;
-      if (houseSparkleTimer > 0) houseSparkleTimer -= dt;
-
-      const houseInfo = getHouseProgress();
-      ctx.clearRect(0, 0, viewW, viewH);
-      drawBackgroundScene(viewW, viewH, animTime);
-      drawCenterHouse(viewW, viewH, houseInfo.level);
-      drawVillagers(viewW, viewH, animTime);
-      drawElderOnMat(viewW, viewH, animTime);
-      updateAndDrawWalkers(dt, animTime);
-      updateAndDrawParticles(dt);
-
-      requestAnimationFrame(renderLoop);
-    }
-
-    /* =========================================================================
-       5. XỬ LÝ QUÀ TẶNG (1 QUÀ = 100 XÂY NHÀ), BÌNH LUẬN & DEMO
-       ========================================================================= */
-    function handleGiftEvent(userName, giftName, giftCountValue, giftIcon = '🎁') {
-      const cleanUser = sanitizeNoCoinWord(userName || 'Khán giả');
-      const cleanGift = sanitizeNoCoinWord(giftName || 'Quà tặng');
-      const rawQty = Math.max(1, Number(giftCountValue) || 1);
-      const addedBuildPoints = rawQty * CONVERSION_RATE;
-
-      const prevLevel = getHouseProgress().level;
-      state.buildScore += addedBuildPoints;
-      saveState();
-      updateHud();
-      const newLevel = getHouseProgress().level;
-
-      elderThankTimer = 2.6;
-      houseSparkleTimer = 1.6;
-      playGiftSound(rawQty >= 50);
-
-      pushFloatingAlert(`${giftIcon} ${cleanUser} tặng ${cleanGift} (+${formatNumber(addedBuildPoints)})`);
-      pushFeedMessage(cleanUser, `Tặng ${cleanGift} (+${formatNumber(addedBuildPoints)} xây nhà)`);
-      spawnVisitorWalker(cleanUser, `${giftIcon} +${formatNumber(addedBuildPoints)}`, true);
-      spawnCelebrationParticles(viewW * 0.5, viewH * 0.44, [giftIcon, '✨', '🧱', '💛']);
-
-      let thanksSpeech = `Lão cảm ơn ${cleanUser} đã tặng ${cleanGift}, giúp lão có thêm ${formatNumber(addedBuildPoints)} xây nhà!`;
-      if (newLevel > prevLevel) {
-        thanksSpeech += ` Ngôi nhà đã lên cấp ${newLevel} rồi!`;
-        pushFloatingAlert(`🎉 Chúc mừng! Ngôi nhà đã nâng lên Cấp ${newLevel}/5!`);
-      }
-      speakVietnamese(thanksSpeech);
-    }
-
-    function handleCommentEvent(userName, commentText) {
-      const cleanUser = sanitizeNoCoinWord(userName || 'Khán giả');
-      const cleanComment = sanitizeNoCoinWord(commentText || '');
-      if (!cleanComment) return;
-      pushFeedMessage(cleanUser, cleanComment);
-      spawnVisitorWalker(cleanUser, cleanComment.slice(0, 18), false);
-    }
-
-    function renderGiftStrip() {
-      const strip = document.getElementById('giftStrip');
-      strip.innerHTML = '';
-      state.gifts.forEach((g) => {
-        const btn = document.createElement('button');
-        btn.type = 'button';
-        btn.className = 'gift-card';
-        const cleanName = sanitizeNoCoinWord(g.name);
-        const val = Math.max(1, Number(g.value) || 1);
-        btn.innerHTML = `
-          <span class="gift-icon">${escapeHtml(g.icon || '🎁')}</span>
-          <span class="gift-name">${escapeHtml(cleanName)}</span>
-          <span class="gift-val">${formatNumber(val)}</span>
-        `;
-        btn.addEventListener('click', () => {
-          ensureAudioContext();
-          startBackgroundMusic();
-          const sampleNames = ['Minh Anh', 'Tuấn Kiệt', 'Lan Ngọc', 'Hoàng Nam', 'Thảo Vy', 'Quốc Bảo'];
-          const randomViewer = sampleNames[Math.floor(Math.random() * sampleNames.length)];
-          handleGiftEvent(randomViewer, cleanName, val, g.icon || '🎁');
-        });
-        strip.appendChild(btn);
-      });
-    }
-
-    let demoInterval = null;
-    const DEMO_VIEWERS = ['Ngọc Hân', 'Đức Huy', 'Bảo Trâm', 'Anh Quân', 'Khánh Linh', 'Gia Huy'];
-    const DEMO_COMMENTS = [
-      'Cố lên cụ ơi, cháu ủng hộ cụ xây nhà!',
-      'Chúc cụ luôn mạnh khỏe bình an ạ!',
-      'Góp chút gạch ngói giúp lão dựng mái nhà!',
-      'Sân làng yên bình quá!'
-    ];
-
-    function toggleDemoMode() {
-      const btn = document.getElementById('demoBtn');
-      if (demoInterval) {
-        clearInterval(demoInterval);
-        demoInterval = null;
-        btn.classList.remove('active');
-        btn.textContent = '▶ Demo';
-        pushFloatingAlert('Đã tạm dừng chạy thử Demo');
+      if (!hasSpeechSynthesisSupport()) {
+        showVisualSpeechFallback(cleaned);
         return;
       }
 
-      ensureAudioContext();
-      startBackgroundMusic();
-      btn.classList.add('active');
-      btn.textContent = '⏹ Dừng Demo';
-      pushFloatingAlert('Bắt đầu chạy thử Demo tự động');
+      unlockSpeechEngine();
+      speakQueue.push(cleaned);
+      flushSpeechQueue();
+    }
 
-      const triggerRandomDemo = () => {
-        const viewer = DEMO_VIEWERS[Math.floor(Math.random() * DEMO_VIEWERS.length)];
-        if (Math.random() < 0.72) {
-          const gift = state.gifts[Math.floor(Math.random() * state.gifts.length)];
-          handleGiftEvent(viewer, gift.name, gift.value, gift.icon);
-        } else {
-          const msg = DEMO_COMMENTS[Math.floor(Math.random() * DEMO_COMMENTS.length)];
-          handleCommentEvent(viewer, msg);
-        }
+    function flushSpeechQueue() {
+      if (isSpeakingNow || speakQueue.length === 0) return;
+      const text = speakQueue.shift();
+      isSpeakingNow = true;
+
+      const hintEl = document.getElementById('speechBubbleHint');
+      if (hintEl) hintEl.textContent = 'Đang đọc cảm ơn...';
+
+      const estMs = Math.min(8500, Math.max(2200, text.length * 90));
+      let settled = false;
+
+      const advanceQueue = () => {
+        if (settled) return;
+        settled = true;
+        resetSpeechSlot();
+        setTimeout(() => flushSpeechQueue(), 40);
       };
 
-      triggerRandomDemo();
-      demoInterval = setInterval(triggerRandomDemo, 3600);
-    }
-
-    /* =========================================================================
-       6. WEBSOCKET BRIDGE KHÔNG CHẶN REGEX CỨNG & BÁO LỖI THỰC TẾ
-       ========================================================================= */
-    let liveSocket = null;
-    let manualDisconnect = false;
-
-    function setLiveStatus(connected, text) {
-      const dot = document.getElementById('liveDot');
-      const mini = document.getElementById('liveStatusMini');
-      const logBox = document.getElementById('liveLogBox');
-      const cleanText = sanitizeNoCoinWord(text);
-
-      if (connected) {
-        dot.classList.add('connected');
-      } else {
-        dot.classList.remove('connected');
-      }
-      mini.textContent = cleanText;
-      if (logBox) {
-        logBox.innerHTML = `Trạng thái: <strong>${escapeHtml(cleanText)}</strong>`;
-      }
-    }
-
-    function normalizeBridgeUrl(rawInput) {
-      let cleaned = String(rawInput || '').trim().replace(/\s+/g, '');
-      if (!cleaned) {
-        cleaned = DEFAULT_BRIDGE_URL;
-      }
-      if (/^https:\/\//i.test(cleaned)) {
-        cleaned = 'wss://' + cleaned.slice(8);
-      } else if (/^http:\/\//i.test(cleaned)) {
-        cleaned = 'ws://' + cleaned.slice(7);
-      } else if (!/^wss?:\/\//i.test(cleaned)) {
-        cleaned = 'wss://' + cleaned;
-      }
-      cleaned = cleaned.replace(/\/+$/, '');
-      return cleaned;
-    }
-
-    function disconnectLive() {
-      manualDisconnect = true;
-      if (liveSocket) {
-        try {
-          liveSocket.close(1000, 'Người dùng ngắt kết nối');
-        } catch (e) {}
-        liveSocket = null;
-      }
-      setLiveStatus(false, 'Đã ngắt kết nối Bridge');
-    }
-
-    function connectToLiveBridge() {
-      const rawUrl = document.getElementById('bridgeUrlInput').value;
-      const finalUrl = normalizeBridgeUrl(rawUrl);
-      const rawId = document.getElementById('tiktokIdInput').value.trim().replace(/^@+/, '') || DEFAULT_TIKTOK_ID;
-
-      document.getElementById('bridgeUrlInput').value = finalUrl;
-      document.getElementById('tiktokIdInput').value = rawId;
-      state.bridgeUrl = finalUrl;
-      state.tiktokId = rawId;
-      saveState();
-
-      if (liveSocket) {
-        manualDisconnect = true;
-        try {
-          liveSocket.close();
-        } catch (e) {}
-        liveSocket = null;
-      }
-
-      manualDisconnect = false;
-      setLiveStatus(false, `Đang kết nối tới ${finalUrl}...`);
+      // Watchdog đảm bảo không bao giờ kẹt hàng đợi nếu onend/onerror không bắn trên iframe/mobile
+      speechWatchdog = setTimeout(advanceQueue, estMs);
 
       try {
-        const sep = finalUrl.includes('?') ? '&' : '?';
-        const wsEndpoint = `${finalUrl}${sep}uniqueId=${encodeURIComponent(rawId)}`;
-        const socket = new WebSocket(wsEndpoint);
-        liveSocket = socket;
+        unlockSpeechEngine();
+        if (window.speechSynthesis.pending && !window.speechSynthesis.speaking) {
+          window.speechSynthesis.cancel();
+        }
 
-        socket.onopen = () => {
-          if (liveSocket !== socket) return;
-          setLiveStatus(true, `Đã kết nối Bridge, đang theo dõi @${rawId}`);
-          pushFloatingAlert(`🟢 Đã kết nối Bridge (@${rawId})`);
-          try {
-            socket.send(JSON.stringify({ uniqueId: rawId }));
-          } catch (sendErr) {
-            setLiveStatus(true, `Đã nối Bridge (@${rawId}), lỗi gửi lệnh: ${sendErr.message || sendErr}`);
-          }
+        const utter = new window.SpeechSynthesisUtterance(text);
+        utter.lang = 'vi-VN';
+        utter.rate = Math.min(1.5, Math.max(0.65, Number(state.settings.voiceRate) || 1.05));
+        utter.pitch = 1.0;
+
+        const chosen =
+          systemVoices.find((v) => v && v.name === state.settings.voiceName) ||
+          systemVoices.find((v) => v && v.lang && v.lang.toLowerCase().startsWith('vi')) ||
+          systemVoices.find((v) => v && v.lang && v.lang.toLowerCase().includes('vi'));
+        if (chosen) utter.voice = chosen;
+
+        utter.onstart = () => {
+          if (hintEl) hintEl.textContent = 'Đang đọc cảm ơn...';
+        };
+        utter.onend = advanceQueue;
+        utter.onerror = () => {
+          showVisualSpeechFallback(text);
+          advanceQueue();
         };
 
-        socket.onmessage = (event) => {
-          if (liveSocket !== socket) return;
+        // Theo dõi trạng thái speaking định kỳ để bắt trường hợp kết thúc âm thầm trên một số webview
+        let startedOnce = false;
+        let idleTicks = 0;
+        speechPollTimer = setInterval(() => {
+          if (settled) return;
           try {
-            const payload = JSON.parse(event.data);
-            if (payload.type === 'gift') {
-              const matched = state.gifts.find(
-                (g) => sanitizeNoCoinWord(g.name).toLowerCase() === sanitizeNoCoinWord(payload.giftName).toLowerCase()
-              );
-              const icon = matched ? matched.icon : '🎁';
-              handleGiftEvent(payload.user, payload.giftName, payload.coins || payload.count || 1, icon);
-            } else if (payload.type === 'comment') {
-              handleCommentEvent(payload.user, payload.comment);
-            } else if (payload.type === 'join') {
-              setLiveStatus(true, `Đã kết nối Bridge, đang theo dõi @${rawId}`);
-              pushFeedMessage(payload.user || `@${rawId}`, 'Đã kết nối luồng trực tiếp!');
-            } else if (payload.type === 'error') {
-              setLiveStatus(false, `Lỗi từ Bridge (@${rawId}): ${payload.message || 'Không rõ lỗi'}`);
+            if (window.speechSynthesis.speaking) {
+              startedOnce = true;
+              idleTicks = 0;
+            } else if (startedOnce && !window.speechSynthesis.pending) {
+              idleTicks++;
+              if (idleTicks >= 2) advanceQueue();
             }
-          } catch (parseErr) {
-            pushFeedMessage('Bridge', sanitizeNoCoinWord(String(event.data || '')));
+          } catch (err) {
+            advanceQueue();
           }
-        };
+        }, 250);
 
-        socket.onerror = (errEvent) => {
-          if (liveSocket !== socket) return;
-          const reason = (errEvent && errEvent.message) ? errEvent.message : 'Không thể thiết lập luồng WebSocket tới máy chủ';
-          setLiveStatus(false, `Lỗi kết nối (${finalUrl}): ${reason}`);
-        };
+        window.speechSynthesis.speak(utter);
 
-        socket.onclose = (closeEvent) => {
-          const code = closeEvent ? closeEvent.code : 0;
-          const reason = (closeEvent && closeEvent.reason) ? ` - ${closeEvent.reason}` : '';
-          if (liveSocket === socket) {
-            liveSocket = null;
-          }
-          if (!manualDisconnect) {
-            setLiveStatus(false, `Kết nối đóng (mã ${code}${reason}) · ${finalUrl}`);
-          }
-        };
-      } catch (openErr) {
-        setLiveStatus(false, `Không mở được WebSocket (${finalUrl}): ${openErr && openErr.message ? openErr.message : openErr}`);
+        // Nếu sau 650ms speechSynthesis vẫn không bắt đầu nói và không có giọng nào sẵn sàng, hiển thị phản hồi trực quan
+        setTimeout(() => {
+          if (settled) return;
+          try {
+            if (!window.speechSynthesis.speaking && !window.speechSynthesis.pending && systemVoices.length === 0) {
+              showVisualSpeechFallback(text);
+            }
+          } catch (err) {}
+        }, 650);
+      } catch (err) {
+        showVisualSpeechFallback(text);
+        advanceQueue();
       }
     }
 
-    /* =========================================================================
-       7. MODAL CÀI ĐẶT ("SỬA") & KHỞI TẠO
-       ========================================================================= */
-    function renderGiftEditList() {
-      const list = document.getElementById('giftEditList');
-      list.innerHTML = '';
-      state.gifts.forEach((g, idx) => {
-        const row = document.createElement('div');
-        row.className = 'gift-edit-row';
-        row.innerHTML = `
-          <input type="text" class="field-input edit-g-icon" value="${escapeHtml(g.icon || '🎁')}" />
-          <input type="text" class="field-input edit-g-name" value="${escapeHtml(sanitizeNoCoinWord(g.name))}" />
-          <input type="number" min="1" class="field-input edit-g-val" value="${Number(g.value) || 1}" />
-          <button type="button" class="del-gift-btn" title="Xóa">✕</button>
-        `;
-        row.querySelector('.del-gift-btn').addEventListener('click', () => {
-          if (state.gifts.length <= 1) return;
-          state.gifts.splice(idx, 1);
-          renderGiftEditList();
+    function composeGratitudeSpeech(viewerName, giftName, coinsEarned, rawQuote) {
+      const cleanName = (viewerName || 'quý khán giả').trim();
+      const cleanGift = (giftName || 'quà tặng').trim();
+      const coinText = `${Number(coinsEarned || 0).toLocaleString('vi-VN')} xu`;
+      const base = (rawQuote || '').replace(/[«»]/g, '').trim();
+
+      const hasThanksName =
+        /cảm ơn/i.test(base) && base.toLowerCase().includes(cleanName.toLowerCase());
+      const greetingPart = hasThanksName
+        ? base
+        : `Cảm ơn ${cleanName} đã tặng ${cleanGift} ${coinText}!`;
+
+      const hasBuildHouse = /xây nhà/i.test(greetingPart);
+      return hasBuildHouse
+        ? greetingPart
+        : `${greetingPart} Giúp lão xây nhà nhé!`;
+    }
+
+    /**
+     * =========================================================================
+     * CANVAS 2D SCENE ENGINE: BẦU TRỜI, RUỘNG LÚA, HÀNG TRE, LỀU, CHIẾU, CỤ GIÀ & NGƯỜI XEM
+     * =========================================================================
+     */
+    class LiveVillageCanvas {
+      constructor(canvas) {
+        this.canvas = canvas;
+        this.ctx = canvas.getContext('2d');
+        this.width = 390;
+        this.height = 844;
+        this.elapsed = 0;
+        this.stormSec = 0;
+        this.elderCheerSec = 0;
+        this.particles = [];
+        this.walkers = [];
+        this.resizeRaf = null;
+
+        this.syncCanvasSize();
+        window.addEventListener('resize', () => this.scheduleResize());
+        if (typeof ResizeObserver !== 'undefined' && this.canvas.parentElement) {
+          this.resizeObserver = new ResizeObserver(() => this.scheduleResize());
+          this.resizeObserver.observe(this.canvas.parentElement);
+        }
+      }
+
+      scheduleResize() {
+        if (this.resizeRaf) return;
+        this.resizeRaf = requestAnimationFrame(() => {
+          this.resizeRaf = null;
+          this.syncCanvasSize();
         });
-        list.appendChild(row);
-      });
-    }
-
-    function openConfigModal() {
-      document.getElementById('bridgeUrlInput').value = state.bridgeUrl || DEFAULT_BRIDGE_URL;
-      document.getElementById('tiktokIdInput').value = state.tiktokId || DEFAULT_TIKTOK_ID;
-      document.getElementById('musicToggle').checked = state.musicEnabled;
-      document.getElementById('voiceToggle').checked = state.voiceEnabled;
-
-      for (let i = 0; i < 5; i++) {
-        document.getElementById(`tierInput${i}`).value = state.tiers[i];
       }
 
-      renderGiftEditList();
-      document.getElementById('configModal').classList.remove('hidden');
-    }
+      syncCanvasSize() {
+        if (!this.canvas || !this.ctx) return;
+        const rect = this.canvas.parentElement
+          ? this.canvas.parentElement.getBoundingClientRect()
+          : { width: window.innerWidth, height: window.innerHeight };
+        const w = Math.max(280, Math.round(rect.width || window.innerWidth));
+        const h = Math.max(460, Math.round(rect.height || window.innerHeight));
+        const dpr = Math.max(1, Math.min(window.devicePixelRatio || 1, 2));
 
-    function closeConfigModal() {
-      document.getElementById('configModal').classList.add('hidden');
-    }
-
-    function saveSettingsFromModal() {
-      const newTiers = [];
-      for (let i = 0; i < 5; i++) {
-        const val = Math.max(100, Number(document.getElementById(`tierInput${i}`).value) || DEFAULT_TIERS[i]);
-        newTiers.push(val);
-      }
-      newTiers.sort((a, b) => a - b);
-      state.tiers = newTiers;
-      state.musicEnabled = document.getElementById('musicToggle').checked;
-      state.voiceEnabled = document.getElementById('voiceToggle').checked;
-
-      const rows = document.querySelectorAll('#giftEditList .gift-edit-row');
-      const updatedGifts = [];
-      rows.forEach((row, idx) => {
-        const icon = row.querySelector('.edit-g-icon').value.trim() || '🎁';
-        const name = sanitizeNoCoinWord(row.querySelector('.edit-g-name').value.trim()) || `Quà ${idx + 1}`;
-        const value = Math.max(1, Number(row.querySelector('.edit-g-val').value) || 1);
-        updatedGifts.push({ id: `gift_${idx}_${Date.now()}`, icon, name, value });
-      });
-      if (updatedGifts.length > 0) {
-        state.gifts = updatedGifts;
+        this.width = w;
+        this.height = h;
+        const targetW = Math.round(w * dpr);
+        const targetH = Math.round(h * dpr);
+        if (this.canvas.width !== targetW || this.canvas.height !== targetH) {
+          this.canvas.width = targetW;
+          this.canvas.height = targetH;
+        }
+        this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       }
 
-      saveState();
-      updateHud();
-      renderGiftStrip();
-      closeConfigModal();
-      pushFloatingAlert('✅ Đã lưu cài đặt quà & mốc');
+      addWalkerCharacter(viewerName, badgeText, icon = '🎁') {
+        const palettes = ['#38bdf8', '#f59e0b', '#10b981', '#ec4899', '#a855f7', '#fb923c'];
+        const enterFromLeft = Math.random() < 0.55;
+        const startX = enterFromLeft ? -28 : this.width + 28;
+        const goalX = enterFromLeft
+          ? this.width * (0.28 + Math.random() * 0.15)
+          : this.width * (0.58 + Math.random() * 0.18);
+        const goalY = this.height * (0.65 + Math.random() * 0.08);
+
+        if (this.walkers.length >= 4) {
+          this.walkers.shift();
+        }
+
+        this.walkers.push({
+          name: viewerName,
+          badgeText,
+          icon,
+          x: startX,
+          y: goalY,
+          goalX,
+          speed: 75 + Math.random() * 25,
+          stride: Math.random() * Math.PI * 2,
+          color: palettes[this.walkers.length % palettes.length],
+          stage: 'enter',
+          holdSec: 3.2
+        });
+      }
+
+      spawnEffectBurst(effectType, fallbackIcon = '🪙') {
+        const sets = {
+          coins: ['🪙', '✨', '💛'],
+          build: ['🧱', '🏠', '🔨'],
+          food: ['🥬', '🥮', '🍞', '🥛'],
+          bark: ['🐾', '🐕', '💬'],
+          storm: ['🌧️', '⚡', '💨'],
+          music: ['🎵', '🎶', '🪕'],
+          throw: ['🪨', '💥']
+        };
+        const icons = sets[effectType] || [fallbackIcon || '🪙', '✨'];
+        const total = effectType === 'storm' ? 26 : 16;
+
+        for (let i = 0; i < total; i++) {
+          const isStorm = effectType === 'storm';
+          this.particles.push({
+            symbol: icons[i % icons.length],
+            x: isStorm ? Math.random() * this.width : this.width * (0.32 + Math.random() * 0.36),
+            y: isStorm ? -20 - Math.random() * 140 : this.height * (0.48 + Math.random() * 0.18),
+            vx: isStorm ? -1.3 : (Math.random() - 0.5) * 4.4,
+            vy: isStorm ? 6.5 + Math.random() * 4 : -2.4 - Math.random() * 4.0,
+            fontSize: 15 + Math.random() * 10,
+            alpha: 1,
+            life: 1
+          });
+        }
+      }
+
+      stepSimulation(dt) {
+        this.elapsed += dt;
+        if (this.stormSec > 0) this.stormSec = Math.max(0, this.stormSec - dt);
+        if (this.elderCheerSec > 0) this.elderCheerSec = Math.max(0, this.elderCheerSec - dt);
+
+        this.particles.forEach((p) => {
+          p.x += p.vx;
+          p.y += p.vy;
+          p.vy += this.stormSec > 0 ? 0.04 : 0.11;
+          p.life -= dt * 0.72;
+          p.alpha = Math.max(0, Math.min(1, p.life));
+        });
+        this.particles = this.particles.filter((p) => p.life > 0);
+
+        this.walkers.forEach((w) => {
+          w.stride += dt * 11;
+          if (w.stage === 'enter') {
+            const diff = w.goalX - w.x;
+            const move = w.speed * dt;
+            if (Math.abs(diff) <= move) {
+              w.x = w.goalX;
+              w.stage = 'hold';
+            } else {
+              w.x += Math.sign(diff) * move;
+            }
+          } else if (w.stage === 'hold') {
+            w.holdSec -= dt;
+            if (w.holdSec <= 0) {
+              w.stage = 'exit';
+              w.goalX = w.x < this.width * 0.5 ? -36 : this.width + 36;
+            }
+          } else if (w.stage === 'exit') {
+            const diff = w.goalX - w.x;
+            const move = w.speed * 1.15 * dt;
+            w.x += Math.sign(diff) * Math.min(Math.abs(diff), move);
+          }
+        });
+        this.walkers = this.walkers.filter((w) => w.x > -60 && w.x < this.width + 60);
+      }
+
+      drawSkyAndRiceField() {
+        const ctx = this.ctx;
+        const w = this.width;
+        const h = this.height;
+        const horizon = h * 0.37;
+
+        const sky = ctx.createLinearGradient(0, 0, 0, horizon);
+        if (this.stormSec > 0) {
+          sky.addColorStop(0, '#334155');
+          sky.addColorStop(1, '#64748b');
+        } else {
+          sky.addColorStop(0, '#d8ecff');
+          sky.addColorStop(0.6, '#f4ebd4');
+          sky.addColorStop(1, '#e6d4a8');
+        }
+        ctx.fillStyle = sky;
+        ctx.fillRect(0, 0, w, horizon);
+
+        if (this.stormSec <= 0) {
+          ctx.fillStyle = 'rgba(253, 224, 71, 0.55)';
+          ctx.beginPath();
+          ctx.arc(w * 0.82, h * 0.14, 24, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        const paddyTop = h * 0.27;
+        const paddy = ctx.createLinearGradient(0, paddyTop, 0, horizon);
+        paddy.addColorStop(0, this.stormSec > 0 ? '#536243' : '#b7b364');
+        paddy.addColorStop(1, this.stormSec > 0 ? '#404d34' : '#9c9648');
+        ctx.fillStyle = paddy;
+        ctx.fillRect(0, paddyTop, w, horizon - paddyTop);
+
+        ctx.strokeStyle = 'rgba(72, 68, 22, 0.24)';
+        ctx.lineWidth = 1;
+        for (let i = 0; i < 5; i++) {
+          const y = paddyTop + 6 + i * ((horizon - paddyTop - 8) / 5);
+          ctx.beginPath();
+          ctx.moveTo(0, y);
+          ctx.lineTo(w, y);
+          ctx.stroke();
+        }
+      }
+
+      drawBamboo() {
+        const ctx = this.ctx;
+        const w = this.width;
+        const h = this.height;
+        const baseY = h * 0.38;
+        const sway = Math.sin(this.elapsed * 1.35) * 3.5;
+
+        const poles = [
+          { x: w * 0.08, top: h * 0.05, r: 7 },
+          { x: w * 0.16, top: h * 0.08, r: 5.5 },
+          { x: w * 0.23, top: h * 0.12, r: 4.5 },
+          { x: w * 0.45, top: h * 0.07, r: 6 },
+          { x: w * 0.56, top: h * 0.10, r: 5 },
+          { x: w * 0.78, top: h * 0.06, r: 6.5 },
+          { x: w * 0.88, top: h * 0.04, r: 7.5 }
+        ];
+
+        poles.forEach((p, idx) => {
+          const tipX = p.x + sway * (idx % 2 === 0 ? 1 : -0.7);
+          ctx.strokeStyle = this.stormSec > 0 ? '#3f5e42' : '#587d47';
+          ctx.lineWidth = p.r;
+          ctx.lineCap = 'round';
+          ctx.beginPath();
+          ctx.moveTo(p.x, baseY + 8);
+          ctx.quadraticCurveTo(p.x + sway * 0.4, (p.top + baseY) * 0.5, tipX, p.top);
+          ctx.stroke();
+
+          ctx.fillStyle = this.stormSec > 0 ? '#4d704e' : '#6c964d';
+          for (let lf = 0; lf < 5; lf++) {
+            const ly = p.top + lf * 22 + 6;
+            const lx = tipX + (lf % 2 === 0 ? 8 : -8);
+            ctx.beginPath();
+            ctx.ellipse(lx, ly, 15, 4.5, lf % 2 === 0 ? -0.35 : 0.35, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        });
+      }
+
+      drawYardTentMatAndTray() {
+        const ctx = this.ctx;
+        const w = this.width;
+        const h = this.height;
+        const yardTop = h * 0.37;
+
+        const yard = ctx.createLinearGradient(0, yardTop, 0, h);
+        if (this.stormSec > 0) {
+          yard.addColorStop(0, '#6d5d47');
+          yard.addColorStop(1, '#524432');
+        } else {
+          yard.addColorStop(0, '#c29f6d');
+          yard.addColorStop(0.55, '#b6905c');
+          yard.addColorStop(1, '#9d7847');
+        }
+        ctx.fillStyle = yard;
+        ctx.fillRect(0, yardTop, w, h - yardTop);
+
+        ctx.fillStyle = 'rgba(55, 36, 15, 0.22)';
+        ctx.beginPath();
+        ctx.ellipse(w * 0.47, h * 0.62, w * 0.25, 22, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        const tx = w * 0.43;
+        const ty = h * 0.43;
+        ctx.fillStyle = '#2b5b84';
+        ctx.beginPath();
+        ctx.moveTo(tx - 68, ty + 46);
+        ctx.lineTo(tx + 8, ty - 42);
+        ctx.lineTo(tx + 74, ty + 42);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.fillStyle = '#1b3852';
+        ctx.beginPath();
+        ctx.moveTo(tx - 18, ty + 46);
+        ctx.lineTo(tx + 8, ty - 12);
+        ctx.lineTo(tx + 34, ty + 46);
+        ctx.closePath();
+        ctx.fill();
+
+        const mx = w * 0.46;
+        const my = h * 0.56;
+        ctx.save();
+        ctx.translate(mx, my);
+        ctx.fillStyle = '#efe3be';
+        ctx.strokeStyle = '#b99c62';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.roundRect(-64, -24, 128, 48, 6);
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.fillStyle = '#d8be7e';
+        for (let i = -52; i <= 52; i += 17) {
+          ctx.fillRect(i - 3, -22, 6, 44);
+        }
+        ctx.restore();
+
+        const rx = w * 0.49;
+        const ry = h * 0.63;
+        ctx.fillStyle = '#b67d46';
+        ctx.strokeStyle = '#784e24';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.ellipse(rx, ry, 44, 18, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+
+        const snacks = [
+          { dx: -16, dy: -2, r: 6, c: '#4ade80' },
+          { dx: -5, dy: -4, r: 5.5, c: '#facc15' },
+          { dx: 6, dy: -2, r: 6, c: '#22c55e' },
+          { dx: 17, dy: -3, r: 5, c: '#fb923c' },
+          { dx: 0, dy: 3, r: 5, c: '#fef08a' }
+        ];
+        snacks.forEach((s) => {
+          ctx.fillStyle = s.c;
+          ctx.beginPath();
+          ctx.arc(rx + s.dx, ry + s.dy, s.r, 0, Math.PI * 2);
+          ctx.fill();
+        });
+
+        const houseLevel = computeHouseInfo(state.totalCoins).level;
+        if (houseLevel >= 2) {
+          ctx.save();
+          ctx.globalAlpha = 0.92;
+          const hx = w * 0.22;
+          const hy = h * 0.43;
+          ctx.fillStyle = '#c86d51';
+          ctx.strokeStyle = '#6e3524';
+          ctx.lineWidth = 2;
+          ctx.fillRect(hx - 34, hy - 22, 68, 40);
+          ctx.strokeRect(hx - 34, hy - 22, 68, 40);
+
+          if (houseLevel >= 3) {
+            ctx.fillStyle = '#b91c1c';
+            ctx.beginPath();
+            ctx.moveTo(hx - 42, hy - 22);
+            ctx.lineTo(hx, hy - 48);
+            ctx.lineTo(hx + 42, hy - 22);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+          }
+
+          if (houseLevel >= 4) {
+            ctx.fillStyle = '#fde047';
+            ctx.fillRect(hx - 9, hy - 9, 18, 16);
+          }
+
+          if (houseLevel >= 5) {
+            ctx.fillStyle = '#ea580c';
+            ctx.fillRect(hx + 42, hy + 4, 18, 12);
+          }
+          ctx.restore();
+        }
+      }
+
+      drawElderOnMat() {
+        const ctx = this.ctx;
+        const w = this.width;
+        const h = this.height;
+        const ex = w * 0.46;
+        const bounce = Math.sin(this.elapsed * 3.2) * (this.elderCheerSec > 0 ? 4.5 : 1.5);
+        const ey = h * 0.55 + bounce;
+
+        ctx.save();
+        ctx.translate(ex, ey);
+
+        ctx.fillStyle = '#7c5d43';
+        ctx.beginPath();
+        ctx.ellipse(0, 14, 24, 14, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = '#8b6b4f';
+        ctx.beginPath();
+        ctx.roundRect(-14, -14, 28, 24, 8);
+        ctx.fill();
+
+        ctx.fillStyle = '#f2c9a0';
+        ctx.beginPath();
+        ctx.arc(0, -24, 12, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = '#f1f5f9';
+        ctx.beginPath();
+        ctx.arc(0, -27, 12.5, Math.PI * 0.95, Math.PI * 2.05);
+        ctx.fill();
+
+        ctx.strokeStyle = '#292524';
+        ctx.lineWidth = 1.8;
+        ctx.beginPath();
+        ctx.arc(-4.5, -24, 2.5, 0.1 * Math.PI, 0.9 * Math.PI);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.arc(4.5, -24, 2.5, 0.1 * Math.PI, 0.9 * Math.PI);
+        ctx.stroke();
+
+        // Hai tay cụ già chắp cảm ơn / mừng vui
+        const spread = this.elderCheerSec > 0 ? Math.sin(this.elapsed * 16) * 2.5 : 0;
+        ctx.fillStyle = '#f2c9a0';
+        ctx.beginPath();
+        ctx.ellipse(-5 - spread, -9, 7, 4.2, -0.35, 0, Math.PI * 2);
+        ctx.ellipse(5 + spread, -9, 7, 4.2, 0.35, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.restore();
+      }
+
+      drawVillagerPair() {
+        const ctx = this.ctx;
+        const w = this.width;
+        const h = this.height;
+        const bx = w * 0.72;
+        const by = h * 0.67;
+        const s1 = Math.sin(this.elapsed * 4.2) * 3;
+        const s2 = Math.cos(this.elapsed * 4.2) * 3;
+
+        this.drawVillager(bx + s1, by - 24, '#f8fafc', '#1e3a8a', '#92400e', 0.95);
+        this.drawVillager(bx + 26 + s2, by + 8, '#ffffff', '#1d4ed8', '#78350f', 1.02);
+      }
+
+      drawVillager(x, y, shirt, pants, band, scale) {
+        const ctx = this.ctx;
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.scale(scale, scale);
+
+        ctx.fillStyle = '#eab890';
+        ctx.fillRect(-10, 24, 7, 22);
+        ctx.fillRect(4, 24, 7, 22);
+        ctx.fillStyle = '#5c3a21';
+        ctx.fillRect(-12, 44, 11, 5);
+        ctx.fillRect(3, 44, 11, 5);
+
+        ctx.fillStyle = pants;
+        ctx.beginPath();
+        ctx.roundRect(-13, 6, 27, 22, 5);
+        ctx.fill();
+
+        ctx.fillStyle = shirt;
+        ctx.beginPath();
+        ctx.roundRect(-15, -18, 31, 28, 7);
+        ctx.fill();
+
+        ctx.strokeStyle = '#ef4444';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(-9, -17);
+        ctx.quadraticCurveTo(0, -11, 9, -17);
+        ctx.stroke();
+
+        ctx.fillStyle = '#f1c29b';
+        ctx.beginPath();
+        ctx.arc(1, -29, 12.5, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = '#1c1917';
+        ctx.beginPath();
+        ctx.arc(1, -31, 13, Math.PI, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = band;
+        ctx.fillRect(-12, -35, 26, 5.5);
+
+        ctx.fillStyle = '#1c1917';
+        ctx.beginPath();
+        ctx.arc(-3, -28, 1.8, 0, Math.PI * 2);
+        ctx.arc(6, -28, 1.8, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.restore();
+      }
+
+      drawWalkers() {
+        const ctx = this.ctx;
+        this.walkers.forEach((vk) => {
+          const hop = vk.stage === 'hold' ? Math.sin(this.elapsed * 5) * 2 : Math.abs(Math.sin(vk.stride)) * -4;
+          ctx.save();
+          ctx.translate(vk.x, vk.y + hop);
+
+          const badge = `${vk.icon} ${vk.name}: ${vk.badgeText}`;
+          ctx.font = 'bold 10px "Inter", sans-serif';
+          const boxW = Math.min(144, ctx.measureText(badge).width + 14);
+          ctx.fillStyle = 'rgba(20, 14, 9, 0.88)';
+          ctx.beginPath();
+          ctx.roundRect(-boxW / 2, -52, boxW, 17, 7);
+          ctx.fill();
+          ctx.strokeStyle = 'rgba(251, 191, 36, 0.72)';
+          ctx.lineWidth = 1;
+          ctx.stroke();
+
+          ctx.fillStyle = '#fef3c7';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(badge, 0, -43.5, boxW - 8);
+
+          ctx.fillStyle = vk.color;
+          ctx.beginPath();
+          ctx.roundRect(-9, -14, 18, 20, 5);
+          ctx.fill();
+
+          ctx.fillStyle = '#f3c69f';
+          ctx.beginPath();
+          ctx.arc(0, -22, 8.5, 0, Math.PI * 2);
+          ctx.fill();
+
+          const swing = vk.stage === 'hold' ? 0 : Math.sin(vk.stride) * 4;
+          ctx.strokeStyle = '#1c1917';
+          ctx.lineWidth = 2.5;
+          ctx.beginPath();
+          ctx.moveTo(-4, 6);
+          ctx.lineTo(-4 + swing, 16);
+          ctx.moveTo(4, 6);
+          ctx.lineTo(4 - swing, 16);
+          ctx.stroke();
+
+          ctx.restore();
+        });
+      }
+
+      drawParticles() {
+        const ctx = this.ctx;
+        this.particles.forEach((pt) => {
+          ctx.save();
+          ctx.globalAlpha = pt.alpha;
+          ctx.font = `${Math.round(pt.fontSize)}px "Inter", sans-serif`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(pt.symbol, pt.x, pt.y);
+          ctx.restore();
+        });
+      }
+
+      render(dt) {
+        if (!this.ctx) return;
+        this.stepSimulation(dt);
+        this.ctx.clearRect(0, 0, this.width, this.height);
+        this.drawSkyAndRiceField();
+        this.drawBamboo();
+        this.drawYardTentMatAndTray();
+        this.drawElderOnMat();
+        this.drawVillagerPair();
+        this.drawWalkers();
+        this.drawParticles();
+      }
     }
 
-    document.getElementById('demoBtn').addEventListener('click', toggleDemoMode);
+    const gameCanvasEl = document.getElementById('gameCanvas');
+    const villageCanvas = new LiveVillageCanvas(gameCanvasEl);
 
-    document.getElementById('audioBtn').addEventListener('click', () => {
-      state.audioEnabled = !state.audioEnabled;
-      const btn = document.getElementById('audioBtn');
-      if (state.audioEnabled) {
-        ensureAudioContext();
-        startBackgroundMusic();
-        btn.classList.remove('muted');
-        btn.textContent = '🔊 Âm thanh';
-      } else {
-        if ('speechSynthesis' in window) window.speechSynthesis.cancel();
-        btn.classList.add('muted');
-        btn.textContent = '🔇 Tắt tiếng';
-      }
-    });
-
-    document.getElementById('editBtn').addEventListener('click', openConfigModal);
-    document.getElementById('closeModalBtn').addEventListener('click', closeConfigModal);
-
-    document.querySelectorAll('.tab-btn').forEach((tabBtn) => {
-      tabBtn.addEventListener('click', () => {
-        document.querySelectorAll('.tab-btn').forEach((b) => b.classList.remove('active'));
-        document.querySelectorAll('.tab-pane').forEach((p) => p.classList.add('hidden'));
-        tabBtn.classList.add('active');
-        document.getElementById(tabBtn.dataset.tab).classList.remove('hidden');
-      });
-    });
-
-    document.getElementById('connectLiveBtn').addEventListener('click', connectToLiveBridge);
-    document.getElementById('disconnectLiveBtn').addEventListener('click', disconnectLive);
-
-    document.getElementById('addGiftBtn').addEventListener('click', () => {
-      state.gifts.push({ id: `new_${Date.now()}`, icon: '🎁', name: 'Quà Mới', value: 10 });
-      renderGiftEditList();
-    });
-
-    document.getElementById('saveSettingsBtn').addEventListener('click', saveSettingsFromModal);
-
-    document.getElementById('resetProgressBtn').addEventListener('click', () => {
-      state.buildScore = 0;
-      saveState();
-      updateHud();
-      closeConfigModal();
-      pushFloatingAlert('🔄 Đã đặt lại tiến độ xây nhà về 0');
-    });
-
-    window.addEventListener('load', () => {
-      loadState();
-      resizeCanvas();
-      updateHud();
-      renderGiftStrip();
-      pushFeedMessage('Sân làng', 'Chạm vào quà bên dưới hoặc bấm Demo để xem thử!');
+    let lastTick = performance.now();
+    function renderLoop(now) {
+      const dt = Math.min(0.05, Math.max(0.001, (now - lastTick) / 1000));
+      lastTick = now;
+      villageCanvas.render(dt);
       requestAnimationFrame(renderLoop);
+    }
+
+    /**
+     * =========================================================================
+     * XỬ LÝ TẶNG QUÀ, BÌNH LUẬN & CẬP NHẬT GIAO DIỆN
+     * =========================================================================
+     */
+    function buildGratitudeLine(template, name, giftName, coins) {
+      const raw = template || 'Cảm ơn {name}, có {gift} tặng {coins} xu là lão yên tâm rồi! Giúp lão xây nhà nhé!';
+      const filled = raw
+        .replace(/\{name\}/gi, name)
+        .replace(/\{gift\}/gi, giftName)
+        .replace(/\{coins\}/gi, coins.toLocaleString('vi-VN'));
+      return `« ${filled} »`;
+    }
+
+    function showFloatingGiftCard(name, coins, icon) {
+      const area = document.getElementById('floatingGiftArea');
+      if (!area) return;
+
+      const card = document.createElement('div');
+      card.className = 'gift-toast-float absolute flex items-center gap-1.5 px-3 py-1 rounded-full bg-stone-950/80 border border-amber-300/60 shadow-lg';
+      card.innerHTML = `
+        <span class="text-sm">${escapeText(icon || '🪙')}</span>
+        <span class="text-xs sm:text-sm font-black text-white text-stroke-dark">${escapeText(name)}</span>
+        <span class="text-xs sm:text-sm font-black text-amber-300 text-stroke-dark">+${coins.toLocaleString('vi-VN')}</span>
+      `;
+      area.appendChild(card);
+      setTimeout(() => {
+        if (card.parentNode) card.parentNode.removeChild(card);
+      }, 2550);
+    }
+
+    function recordSupporterScore(name, coins) {
+      const colors = ['#f43f5e', '#38bdf8', '#f59e0b', '#a855f7', '#10b981', '#ec4899'];
+      const foundIdx = state.leaderboard.findIndex(
+        (entry) => entry.name.toLowerCase() === name.toLowerCase()
+      );
+      if (foundIdx >= 0) {
+        state.leaderboard[foundIdx].coins += coins;
+      } else {
+        state.leaderboard.push({
+          name,
+          coins,
+          color: colors[state.leaderboard.length % colors.length]
+        });
+      }
+      state.leaderboard.sort((a, b) => b.coins - a.coins);
+      state.leaderboard = state.leaderboard.slice(0, 5);
+    }
+
+    function triggerStormVisuals() {
+      const box = document.getElementById('livePhoneBox');
+      const flash = document.getElementById('stormFlashOverlay');
+      if (box) {
+        box.classList.remove('shake-effect');
+        void box.offsetWidth;
+        box.classList.add('shake-effect');
+      }
+      if (flash) {
+        flash.classList.remove('storm-flash-anim');
+        void flash.offsetWidth;
+        flash.classList.add('storm-flash-anim');
+      }
+      villageCanvas.stormSec = 4.0;
+    }
+
+    function executeGiftEvent(giftObj, rawViewerName, overrideCoins) {
+      if (!giftObj) return;
+      folkAudio.unlock();
+      if (state.settings.musicEnabled && !folkAudio.loopId) {
+        folkAudio.startBgMusic();
+      }
+
+      const viewerName = (rawViewerName || '').trim() || MOCK_VIEWERS[Math.floor(Math.random() * MOCK_VIEWERS.length)];
+      const coinsEarned =
+        typeof overrideCoins === 'number' && !isNaN(overrideCoins) && overrideCoins > 0
+          ? Math.round(overrideCoins)
+          : Math.max(1, Number(giftObj.coins) || 10);
+
+      const oldLevel = computeHouseInfo(state.totalCoins).level;
+      state.totalCoins += coinsEarned;
+      const newLevel = computeHouseInfo(state.totalCoins).level;
+
+      recordSupporterScore(viewerName, coinsEarned);
+
+      const quote = buildGratitudeLine(giftObj.speech, viewerName, giftObj.name, coinsEarned);
+      state.currentSpeech = quote;
+
+      persistState();
+      renderHudAll();
+
+      showFloatingGiftCard(viewerName, coinsEarned, giftObj.icon);
+      folkAudio.playGiftSfx(giftObj.effect);
+      villageCanvas.spawnEffectBurst(giftObj.effect, giftObj.icon);
+      villageCanvas.addWalkerCharacter(viewerName, `${giftObj.name} +${coinsEarned}`, giftObj.icon || '🎁');
+      villageCanvas.elderCheerSec = 2.4;
+
+      if (giftObj.effect === 'storm') {
+        triggerStormVisuals();
+      } else if (giftObj.effect === 'throw') {
+        const box = document.getElementById('livePhoneBox');
+        if (box) {
+          box.classList.remove('shake-effect');
+          void box.offsetWidth;
+          box.classList.add('shake-effect');
+        }
+      }
+
+      const spokenText = composeGratitudeSpeech(viewerName, giftObj.name, coinsEarned, quote);
+      queueVietnameseSpeech(spokenText);
+
+      if (newLevel > oldLevel) {
+        notifyToast(`🎉 Ngôi nhà đã nâng lên cấp ${newLevel}/5!`);
+      }
+    }
+
+    function executeViewerComment(rawName, rawComment) {
+      const viewerName = (rawName || '').trim() || MOCK_VIEWERS[Math.floor(Math.random() * MOCK_VIEWERS.length)];
+      const comment = (rawComment || '').trim() || MOCK_COMMENTS[Math.floor(Math.random() * MOCK_COMMENTS.length)];
+
+      villageCanvas.addWalkerCharacter(viewerName, comment, '💬');
+      if (state.settings.readComments) {
+        queueVietnameseSpeech(`${viewerName} bình luận: ${comment}`);
+      }
+    }
+
+    function renderHudAll() {
+      const info = computeHouseInfo(state.totalCoins);
+      const pill = document.getElementById('houseLevelPill');
+      const coinsEl = document.getElementById('hudCoinsValue');
+      const fillEl = document.getElementById('hudProgressFill');
+      const pctEl = document.getElementById('hudProgressPct');
+      const goalEl = document.getElementById('hudGoalLine');
+      const bubbleEl = document.getElementById('gratitudeBubbleText');
+
+      if (pill) pill.textContent = info.label;
+      if (coinsEl) coinsEl.textContent = formatShortCoins(state.totalCoins);
+      if (fillEl) fillEl.style.width = `${info.pct}%`;
+      if (pctEl) pctEl.textContent = `${info.pct}%`;
+      if (goalEl) {
+        goalEl.textContent = `Xây cấp ${info.nextTier}: ${formatShortCoins(state.totalCoins)} / ${formatShortCoins(info.goal)} 🪙`;
+      }
+      if (bubbleEl) bubbleEl.textContent = state.currentSpeech;
+
+      const lbEl = document.getElementById('leaderboardContainer');
+      if (lbEl) {
+        const medals = ['🥇', '🥈', '🥉'];
+        lbEl.innerHTML = state.leaderboard
+          .slice(0, 5)
+          .map((item, idx) => {
+            const rankBadge =
+              idx < 3
+                ? `<span class="text-[11px] leading-none shrink-0">${medals[idx]}</span>`
+                : `<span class="w-4 h-4 rounded-full bg-stone-700 text-[9px] font-bold text-stone-200 flex items-center justify-center shrink-0">${idx + 1}</span>`;
+            return `
+              <div class="flex items-center gap-1 bg-black/30 rounded-lg px-1.5 py-1 min-w-0">
+                ${rankBadge}
+                <span class="w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-black text-white shrink-0" style="background:${escapeText(item.color || '#d97706')}">
+                  ${escapeText(item.name.charAt(0).toUpperCase())}
+                </span>
+                <div class="min-w-0 flex-1 leading-tight">
+                  <div class="text-[9.5px] font-bold text-white truncate">${escapeText(item.name)}</div>
+                  <div class="text-[9px] font-extrabold text-amber-300">🪙 ${formatShortCoins(item.coins)}</div>
+                </div>
+              </div>
+            `;
+          })
+          .join('');
+      }
+
+      const giftsEl = document.getElementById('giftButtonsContainer');
+      if (giftsEl) {
+        const palettes = [
+          'from-emerald-700/90 to-emerald-900/95 border-emerald-300/35',
+          'from-amber-700/90 to-amber-900/95 border-amber-300/35',
+          'from-sky-700/90 to-sky-900/95 border-sky-300/35',
+          'from-orange-700/90 to-orange-900/95 border-orange-300/35',
+          'from-rose-800/90 to-rose-950/95 border-rose-300/35',
+          'from-purple-800/90 to-purple-950/95 border-purple-300/35'
+        ];
+        giftsEl.innerHTML = state.gifts
+          .map((g, i) => {
+            const p = palettes[i % palettes.length];
+            return `
+              <button type="button" data-gift-id="${escapeText(g.id)}" class="btn-gift-row w-full text-left px-2 py-1 rounded-lg bg-gradient-to-r ${p} border hover:brightness-110 active:scale-95 transition cursor-pointer flex items-center justify-between gap-1">
+                <span class="flex items-center gap-1 min-w-0">
+                  <span class="text-xs shrink-0">${escapeText(g.icon || '🎁')}</span>
+                  <span class="text-[10px] font-bold text-white truncate">${escapeText(g.name)}</span>
+                </span>
+                <span class="text-[9px] font-extrabold text-amber-200 shrink-0">${g.coins}</span>
+              </button>
+            `;
+          })
+          .join('');
+
+        giftsEl.querySelectorAll('.btn-gift-row').forEach((btn) => {
+          btn.addEventListener('click', () => {
+            const gId = btn.getAttribute('data-gift-id');
+            const targetGift = state.gifts.find((item) => item.id === gId);
+            if (targetGift) executeGiftEvent(targetGift);
+          });
+        });
+      }
+
+      const mIcon = document.getElementById('musicBtnIcon');
+      const mLbl = document.getElementById('musicBtnLabel');
+      const vIcon = document.getElementById('voiceBtnIcon');
+      const vLbl = document.getElementById('voiceBtnLabel');
+      if (mIcon) mIcon.textContent = state.settings.musicEnabled ? '🎵' : '🔕';
+      if (mLbl) mLbl.textContent = state.settings.musicEnabled ? 'Nhạc' : 'Tắt nhạc';
+      if (vIcon) vIcon.textContent = state.settings.voiceEnabled ? '🗣️' : '🔇';
+      if (vLbl) vLbl.textContent = state.settings.voiceEnabled ? 'Đọc' : 'Tắt đọc';
+    }
+
+    function syncModePanelVisibility() {
+      const isLiveMode = state.liveMode === 'live';
+      const showSetTest = !isLiveMode && !state.testSetupSaved;
+
+      const btnModeTest = document.getElementById('btnModeTest');
+      const btnModeLive = document.getElementById('btnModeLive');
+      const modeBadge = document.getElementById('modeSummaryBadge');
+      const testPanel = document.getElementById('testSetupPanel');
+      const savedBanner = document.getElementById('testSavedBanner');
+      const livePanel = document.getElementById('liveConnectPanel');
+
+      if (btnModeTest && btnModeLive) {
+        btnModeTest.className = !isLiveMode
+          ? 'px-3 py-1 rounded-lg text-xs font-extrabold bg-amber-500 text-stone-950 cursor-pointer transition'
+          : 'px-3 py-1 rounded-lg text-xs font-extrabold text-stone-300 hover:text-white cursor-pointer transition';
+        btnModeLive.className = isLiveMode
+          ? 'px-3 py-1 rounded-lg text-xs font-extrabold bg-rose-600 text-white cursor-pointer transition'
+          : 'px-3 py-1 rounded-lg text-xs font-extrabold text-stone-300 hover:text-white cursor-pointer transition';
+      }
+
+      if (modeBadge) {
+        modeBadge.textContent = isLiveMode
+          ? 'Chế độ: Kết nối LIVE'
+          : state.testSetupSaved
+            ? 'Chế độ: Test (Đã lưu)'
+            : 'Chế độ: Test';
+      }
+
+      if (testPanel) testPanel.classList.toggle('hidden', !showSetTest);
+      if (savedBanner) savedBanner.classList.toggle('hidden', !(!isLiveMode && state.testSetupSaved));
+      if (livePanel) livePanel.classList.toggle('hidden', !isLiveMode);
+    }
+
+    function renderStudioModalContents() {
+      syncModePanelVisibility();
+      loadSystemVoices();
+
+      const testGiftSel = document.getElementById('testGiftSelect');
+      if (testGiftSel) {
+        const curGift = state.testConfig?.giftId || state.gifts[0]?.id || '';
+        testGiftSel.innerHTML = state.gifts
+          .map((g) => `<option value="${escapeText(g.id)}">${escapeText(g.icon)} ${escapeText(g.name)} (${g.coins})</option>`)
+          .join('');
+        testGiftSel.value = curGift;
+      }
+
+      const tName = document.getElementById('testViewerNameInput');
+      if (tName && document.activeElement !== tName) tName.value = state.testConfig?.viewerName || '';
+      const tCoins = document.getElementById('testCoinsInput');
+      if (tCoins && document.activeElement !== tCoins) tCoins.value = state.testConfig?.coins || '';
+      const tCmt = document.getElementById('testCommentInput');
+      if (tCmt && document.activeElement !== tCmt) tCmt.value = state.testConfig?.comment || '';
+
+      const picker = document.getElementById('customGiftPicker');
+      if (picker) {
+        picker.innerHTML = state.gifts
+          .map((g) => `<option value="${escapeText(g.id)}">${escapeText(g.icon)} ${escapeText(g.name)} (${g.coins} xu)</option>`)
+          .join('');
+      }
+
+      const listEditor = document.getElementById('customGiftListEditor');
+      if (listEditor) {
+        listEditor.innerHTML = state.gifts
+          .map(
+            (g) => `
+            <div class="p-2.5 rounded-xl bg-stone-900 border border-white/10 space-y-1.5" data-gift-row="${escapeText(g.id)}">
+              <div class="flex items-center gap-1.5">
+                <input type="text" class="inp-g-icon w-11 px-2 py-1 rounded-lg bg-stone-800 border border-white/15 text-xs text-center text-white" value="${escapeText(g.icon)}" />
+                <input type="text" class="inp-g-name flex-1 px-2 py-1 rounded-lg bg-stone-800 border border-white/15 text-xs font-bold text-white" value="${escapeText(g.name)}" />
+                <input type="number" min="1" class="inp-g-coins w-20 px-2 py-1 rounded-lg bg-stone-800 border border-white/15 text-xs font-bold text-amber-300" value="${Number(g.coins) || 10}" />
+                <button type="button" class="btn-del-gift px-2 py-1 rounded-lg bg-rose-900/75 hover:bg-rose-800 text-rose-200 text-xs font-bold cursor-pointer">✕</button>
+              </div>
+              <input type="text" class="inp-g-speech w-full px-2.5 py-1.5 rounded-lg bg-stone-800 border border-white/15 text-[11px] text-amber-100" value="${escapeText(g.speech)}" />
+            </div>
+          `
+          )
+          .join('');
+
+        listEditor.querySelectorAll('[data-gift-row]').forEach((row) => {
+          const id = row.getAttribute('data-gift-row');
+          const item = state.gifts.find((x) => x.id === id);
+          if (!item) return;
+
+          row.querySelector('.inp-g-icon')?.addEventListener('change', (e) => {
+            item.icon = e.target.value.trim() || '🎁';
+            persistState();
+            renderHudAll();
+          });
+
+          row.querySelector('.inp-g-name')?.addEventListener('change', (e) => {
+            item.name = e.target.value.trim() || 'Quà tặng';
+            persistState();
+            renderHudAll();
+            renderStudioModalContents();
+          });
+
+          row.querySelector('.inp-g-coins')?.addEventListener('change', (e) => {
+            item.coins = Math.max(1, parseInt(e.target.value, 10) || 1);
+            persistState();
+            renderHudAll();
+            renderStudioModalContents();
+          });
+
+          row.querySelector('.inp-g-speech')?.addEventListener('change', (e) => {
+            item.speech = e.target.value.trim() || 'Cảm ơn {name} tặng {coins} xu! Giúp lão xây nhà nhé!';
+            persistState();
+          });
+
+          row.querySelector('.btn-del-gift')?.addEventListener('click', () => {
+            if (state.gifts.length <= 1) {
+              notifyToast('Cần giữ lại ít nhất 1 quà tặng!');
+              return;
+            }
+            state.gifts = state.gifts.filter((x) => x.id !== id);
+            persistState();
+            renderHudAll();
+            renderStudioModalContents();
+            notifyToast('Đã xóa món quà');
+          });
+        });
+      }
+
+      const s = state.settings;
+      const setChk = (id, val) => {
+        const el = document.getElementById(id);
+        if (el) el.checked = !!val;
+      };
+      setChk('toggleAutoLiveStream', state.autoLiveStream);
+      setChk('optVoiceEnabled', s.voiceEnabled);
+      setChk('optReadComments', s.readComments);
+      setChk('optMusicEnabled', s.musicEnabled);
+
+      const roomTagInp = document.getElementById('liveRoomTagInput');
+      if (roomTagInp && document.activeElement !== roomTagInp) {
+        roomTagInp.value = state.liveRoomTag || '';
+      }
+
+      const ttIdInp = document.getElementById('tiktokLiveIdInput');
+      if (ttIdInp && document.activeElement !== ttIdInp) {
+        ttIdInp.value = state.tiktokLiveId || '';
+      }
+
+      const bridgeInp = document.getElementById('tiktokBridgeUrlInput');
+      if (bridgeInp && document.activeElement !== bridgeInp) {
+        bridgeInp.value = state.tiktokBridgeUrl || '';
+      }
+
+      const rateInp = document.getElementById('optVoiceRate');
+      const rateLbl = document.getElementById('voiceRateLabel');
+      if (rateInp) rateInp.value = s.voiceRate;
+      if (rateLbl) rateLbl.textContent = `${Number(s.voiceRate).toFixed(2)}x`;
+
+      const mVolInp = document.getElementById('optMusicVol');
+      const mVolLbl = document.getElementById('musicVolLabel');
+      if (mVolInp) mVolInp.value = s.musicVol;
+      if (mVolLbl) mVolLbl.textContent = `${Math.round(s.musicVol * 100)}%`;
+
+      const sVolInp = document.getElementById('optSfxVol');
+      const sVolLbl = document.getElementById('sfxVolLabel');
+      if (sVolInp) sVolInp.value = s.sfxVol;
+      if (sVolLbl) sVolLbl.textContent = `${Math.round(s.sfxVol * 100)}%`;
+
+      const directCoins = document.getElementById('setCoinsDirectInput');
+      if (directCoins && document.activeElement !== directCoins) {
+        directCoins.value = state.totalCoins;
+      }
+    }
+
+    function openStudio(tab = 'mode') {
+      const modal = document.getElementById('studioModal');
+      if (!modal) return;
+      modal.classList.remove('hidden');
+      renderStudioModalContents();
+      selectStudioTab(tab);
+    }
+
+    function closeStudio() {
+      const modal = document.getElementById('studioModal');
+      if (modal) modal.classList.add('hidden');
+    }
+
+    function selectStudioTab(tabName) {
+      document.querySelectorAll('.studio-tab').forEach((btn) => {
+        const active = btn.getAttribute('data-studio-tab') === tabName;
+        btn.className = active
+          ? 'studio-tab py-1.5 rounded-lg text-xs font-extrabold bg-amber-500 text-stone-950 cursor-pointer'
+          : 'studio-tab py-1.5 rounded-lg text-xs font-bold bg-stone-800 text-stone-200 hover:bg-stone-700 cursor-pointer';
+      });
+      ['mode', 'gifts', 'audio'].forEach((t) => {
+        const sec = document.getElementById(`studioTab-${t}`);
+        if (sec) sec.classList.toggle('hidden', t !== tabName);
+      });
+    }
+
+    /**
+     * =========================================================================
+     * KẾT NỐI LIVE THEO ID & LUỒNG TƯƠNG TÁC THỜI GIAN THỰC
+     * =========================================================================
+     */
+    let liveStreamInterval = null;
+    let activeLiveSocket = null;
+    let activeLiveEventSource = null;
+    let isTikTokLiveConnected = false;
+
+    function updateLiveConnectionUi(connected, statusLabel, noteText) {
+      isTikTokLiveConnected = !!connected;
+      const dot = document.getElementById('ttLiveStatusDot');
+      const lbl = document.getElementById('ttLiveStatusLabel');
+      const btn = document.getElementById('btnConnectTikTokId');
+      const note = document.getElementById('ttConnectionNote');
+
+      if (dot) {
+        dot.className = connected
+          ? 'w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse shrink-0'
+          : 'w-2.5 h-2.5 rounded-full bg-stone-500 shrink-0';
+      }
+      if (lbl && statusLabel) lbl.textContent = statusLabel;
+      if (btn) btn.textContent = connected ? 'Ngắt' : 'Kết nối ID';
+      if (note && noteText) note.textContent = noteText;
+    }
+
+    function handleIncomingRealtimePayload(rawPayload, liveTag) {
+      try {
+        const data = typeof rawPayload === 'string' ? JSON.parse(rawPayload) : rawPayload;
+        if (!data || typeof data !== 'object') return;
+        const item = data.data && typeof data.data === 'object' ? data.data : data;
+        const evType = String(item.type || item.event || data.type || data.event || '').toLowerCase();
+        const viewerName =
+          item.user || item.nickname || item.uniqueId || item.username || item.name || 'Khán giả';
+
+        if (
+          evType.includes('gift') ||
+          item.giftName ||
+          item.gift_name ||
+          item.coins !== undefined ||
+          item.diamondCount !== undefined
+        ) {
+          const giftTitle = item.giftName || item.gift_name || item.gift || 'Quà TikTok';
+          const rawCoinVal = Number(
+            item.coins ?? item.coinCount ?? item.diamondCount ?? item.value ?? 0
+          );
+          const matched = state.gifts.find(
+            (g) => g.name.toLowerCase() === String(giftTitle).toLowerCase()
+          );
+          const giftObj = matched || {
+            id: `tt-${Date.now()}`,
+            icon: item.icon || '🪙',
+            name: String(giftTitle),
+            coins: rawCoinVal > 0 ? rawCoinVal : 50,
+            effect: rawCoinVal >= 500 ? 'build' : 'coins',
+            speech:
+              item.speech ||
+              'Cảm ơn {name} tặng {gift} {coins} xu! Giúp lão xây nhà nhé!'
+          };
+          executeGiftEvent(giftObj, String(viewerName), rawCoinVal > 0 ? rawCoinVal : undefined);
+        } else if (
+          evType.includes('comment') ||
+          evType.includes('chat') ||
+          item.comment ||
+          item.message ||
+          item.text
+        ) {
+          const commentText = String(item.comment || item.message || item.text || '').trim();
+          if (commentText) {
+            executeViewerComment(String(viewerName), commentText);
+          }
+        } else if (evType.includes('join') || evType.includes('member')) {
+          villageCanvas.addWalkerCharacter(String(viewerName), `Vào ${liveTag || 'LIVE'}`, '👋');
+        }
+      } catch (err) {
+        // Bỏ qua gói tin luồng Live không hợp lệ
+      }
+    }
+
+    function disconnectTikTokLiveBridge(silent = true) {
+      if (activeLiveSocket) {
+        try {
+          activeLiveSocket.close();
+        } catch (err) {}
+        activeLiveSocket = null;
+      }
+      if (activeLiveEventSource) {
+        try {
+          activeLiveEventSource.close();
+        } catch (err) {}
+        activeLiveEventSource = null;
+      }
+      updateLiveConnectionUi(
+        false,
+        'Chưa kết nối',
+        'Trình duyệt không kết nối thẳng tới TikTok Live bằng @id nếu không có Bridge server đẩy sự kiện JSON (gift / comment). Nếu chưa có Bridge, hệ thống có thể bật luồng mô phỏng khi bấm Kết nối ID.'
+      );
+      if (!silent) notifyToast('Đã ngắt kết nối ID Live');
+    }
+
+    function connectTikTokLiveById(rawId) {
+      const cleanId = String(rawId || '').trim().replace(/^@+/, '');
+      if (!cleanId) {
+        notifyToast('Vui lòng nhập ID Live (VD: @lao_xay_nha)');
+        return;
+      }
+
+      disconnectTikTokLiveBridge(true);
+      state.liveMode = 'live';
+      state.tiktokLiveId = `@${cleanId}`;
+      persistState();
+      syncModePanelVisibility();
+
+      const customUrl = (state.tiktokBridgeUrl || '').trim();
+      const targetUrl = customUrl
+        ? customUrl.replace(/\{id\}/gi, encodeURIComponent(cleanId))
+        : '';
+
+      if (targetUrl.startsWith('ws://') || targetUrl.startsWith('wss://')) {
+        try {
+          const sep = targetUrl.includes('?') ? '&' : '?';
+          const ws = new WebSocket(`${targetUrl}${sep}uniqueId=${encodeURIComponent(cleanId)}`);
+          activeLiveSocket = ws;
+
+          ws.onopen = () => {
+            try {
+              ws.send(JSON.stringify({ action: 'join', uniqueId: cleanId }));
+            } catch (err) {}
+            updateLiveConnectionUi(
+              true,
+              `Đang nối @${cleanId}`,
+              `Đang nhận quà và bình luận thời gian thực qua WebSocket cho @${cleanId}.`
+            );
+            notifyToast(`Đã kết nối ID @${cleanId}`);
+          };
+
+          ws.onmessage = (ev) => {
+            handleIncomingRealtimePayload(ev.data, `@${cleanId}`);
+          };
+
+          ws.onerror = () => {
+            state.autoLiveStream = true;
+            persistState();
+            syncAutoLiveStreamTimer();
+            updateLiveConnectionUi(
+              false,
+              'Bridge lỗi · Đang mô phỏng',
+              `Không mở được WebSocket tới @${cleanId} (cần server hỗ trợ WSS/HTTPS). Đã bật luồng tương tác mô phỏng.`
+            );
+            notifyToast(`Bridge lỗi cho @${cleanId}, đang chạy mô phỏng`);
+          };
+
+          ws.onclose = () => {
+            if (activeLiveSocket === ws) {
+              activeLiveSocket = null;
+              updateLiveConnectionUi(
+                false,
+                'Đã đóng kết nối',
+                `Kết nối WebSocket tới @${cleanId} đã đóng.`
+              );
+            }
+          };
+          return;
+        } catch (err) {
+          // Chuyển sang luồng mô phỏng khi WebSocket bị chặn
+        }
+      } else if (targetUrl.startsWith('http://') || targetUrl.startsWith('https://')) {
+        if (typeof EventSource !== 'undefined') {
+          try {
+            const sep = targetUrl.includes('?') ? '&' : '?';
+            const es = new EventSource(`${targetUrl}${sep}uniqueId=${encodeURIComponent(cleanId)}`);
+            activeLiveEventSource = es;
+
+            es.onopen = () => {
+              updateLiveConnectionUi(
+                true,
+                `Đang nghe SSE @${cleanId}`,
+                `Đang nhận luồng sự kiện SSE thời gian thực cho @${cleanId}.`
+              );
+              notifyToast(`Đang nghe luồng @${cleanId}`);
+            };
+
+            es.onmessage = (ev) => {
+              handleIncomingRealtimePayload(ev.data, `@${cleanId}`);
+            };
+
+            es.onerror = () => {
+              try { es.close(); } catch (err) {}
+              if (activeLiveEventSource === es) activeLiveEventSource = null;
+              updateLiveConnectionUi(
+                false,
+                'SSE gián đoạn',
+                `Luồng SSE cho @${cleanId} bị ngắt hoặc sai URL/CORS.`
+              );
+            };
+            return;
+          } catch (err) {
+            // Chuyển sang luồng mô phỏng khi EventSource gặp lỗi
+          }
+        }
+      }
+
+      state.autoLiveStream = true;
+      persistState();
+      syncAutoLiveStreamTimer();
+      updateLiveConnectionUi(
+        false,
+        `Mô phỏng @${cleanId}`,
+        `Chưa có URL Bridge thật cho @${cleanId} (cần Bridge server đẩy JSON gift/comment để đọc Live thật). Đã bật luồng mô phỏng nhân vật vào sân.`
+      );
+      villageCanvas.addWalkerCharacter(`@${cleanId}`, 'Mô phỏng LIVE', '📡');
+      notifyToast(`Đang chạy luồng mô phỏng cho @${cleanId}`);
+    }
+
+    function syncAutoLiveStreamTimer() {
+      if (liveStreamInterval) {
+        clearInterval(liveStreamInterval);
+        liveStreamInterval = null;
+      }
+      if (!state.autoLiveStream) return;
+
+      liveStreamInterval = setInterval(() => {
+        if (!state.autoLiveStream) return;
+        const viewer = MOCK_VIEWERS[Math.floor(Math.random() * MOCK_VIEWERS.length)];
+        if (Math.random() < 0.45) {
+          const cmt = MOCK_COMMENTS[Math.floor(Math.random() * MOCK_COMMENTS.length)];
+          executeViewerComment(viewer, cmt);
+        } else {
+          const gift = state.gifts[Math.floor(Math.random() * state.gifts.length)];
+          if (gift) executeGiftEvent(gift, viewer);
+        }
+      }, 6200);
+    }
+
+    function wireControls() {
+      document.getElementById('btnOpenEditorRight')?.addEventListener('click', () => openStudio('mode'));
+      document.getElementById('btnOpenEditorBottom')?.addEventListener('click', () => openStudio('mode'));
+      document.getElementById('btnCloseStudioModal')?.addEventListener('click', closeStudio);
+
+      document.querySelectorAll('.studio-tab').forEach((btn) => {
+        btn.addEventListener('click', () => selectStudioTab(btn.getAttribute('data-studio-tab')));
+      });
+
+      // Chuyển chế độ Test / Kết nối LIVE
+      document.getElementById('btnModeTest')?.addEventListener('click', () => {
+        disconnectTikTokLiveBridge(true);
+        state.liveMode = 'test';
+        state.testSetupSaved = false;
+        persistState();
+        syncModePanelVisibility();
+        notifyToast('Đã chuyển sang chế độ Test');
+      });
+
+      document.getElementById('btnModeLive')?.addEventListener('click', () => {
+        state.liveMode = 'live';
+        persistState();
+        syncModePanelVisibility();
+        notifyToast('Đã chuyển sang Kết nối LIVE');
+      });
+
+      // Lưu Test: lưu cấu hình, ẩn Set Test và phát thử quà + bình luận
+      document.getElementById('btnSaveTestSetup')?.addEventListener('click', () => {
+        folkAudio.unlock();
+        unlockSpeechEngine();
+
+        const vName = (document.getElementById('testViewerNameInput')?.value || '').trim() || 'Ebenhyý';
+        const gId = document.getElementById('testGiftSelect')?.value || state.gifts[0]?.id || 'vat-lieu';
+        const rawCoins = (document.getElementById('testCoinsInput')?.value || '').trim();
+        const cmt = (document.getElementById('testCommentInput')?.value || '').trim();
+        const parsedCoins = rawCoins ? parseInt(rawCoins, 10) : undefined;
+
+        state.testConfig = {
+          viewerName: vName,
+          giftId: gId,
+          coins: parsedCoins && parsedCoins > 0 ? String(parsedCoins) : '',
+          comment: cmt
+        };
+        state.testSetupSaved = true;
+        persistState();
+        syncModePanelVisibility();
+
+        const giftObj = state.gifts.find((g) => g.id === gId) || state.gifts[0];
+        if (giftObj) {
+          executeGiftEvent(giftObj, vName, parsedCoins && parsedCoins > 0 ? parsedCoins : undefined);
+        }
+        if (cmt) {
+          setTimeout(() => executeViewerComment(vName, cmt), 900);
+        }
+        notifyToast('Đã lưu Test & ẩn khung Set Test');
+      });
+
+      document.getElementById('btnReopenTestSetup')?.addEventListener('click', () => {
+        state.liveMode = 'test';
+        state.testSetupSaved = false;
+        persistState();
+        syncModePanelVisibility();
+      });
+
+      const ttIdInput = document.getElementById('tiktokLiveIdInput');
+      document.getElementById('btnConnectTikTokId')?.addEventListener('click', () => {
+        folkAudio.unlock();
+        unlockSpeechEngine();
+        if (isTikTokLiveConnected) {
+          disconnectTikTokLiveBridge(false);
+        } else {
+          connectTikTokLiveById(ttIdInput ? ttIdInput.value : state.tiktokLiveId);
+        }
+      });
+
+      ttIdInput?.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          folkAudio.unlock();
+          unlockSpeechEngine();
+          connectTikTokLiveById(ttIdInput.value);
+        }
+      });
+
+      document.getElementById('tiktokBridgeUrlInput')?.addEventListener('change', (e) => {
+        state.tiktokBridgeUrl = (e.target.value || '').trim();
+        persistState();
+        notifyToast('Đã lưu URL Bridge');
+      });
+
+      // Chạm bong bóng lời thoại để nghe cảm ơn
+      document.getElementById('gratitudeBubble')?.addEventListener('click', () => {
+        folkAudio.unlock();
+        unlockSpeechEngine();
+        if (!state.settings.voiceEnabled) {
+          state.settings.voiceEnabled = true;
+          persistState();
+          renderHudAll();
+        }
+        const spoken = composeGratitudeSpeech('quý khán giả', 'quà tặng', 0, state.currentSpeech);
+        queueVietnameseSpeech(spoken);
+      });
+
+      // Nút Nhạc trên màn hình chính
+      document.getElementById('btnMusicToggle')?.addEventListener('click', () => {
+        folkAudio.unlock();
+        state.settings.musicEnabled = !state.settings.musicEnabled;
+        persistState();
+        renderHudAll();
+        if (state.settings.musicEnabled) {
+          folkAudio.startBgMusic();
+          notifyToast('Đã bật nhạc nền dân ca');
+        } else {
+          folkAudio.stopBgMusic();
+          notifyToast('Đã tắt nhạc nền');
+        }
+      });
+
+      // Nút Đọc trên màn hình chính
+      document.getElementById('btnVoiceToggle')?.addEventListener('click', () => {
+        folkAudio.unlock();
+        state.settings.voiceEnabled = !state.settings.voiceEnabled;
+        persistState();
+        renderHudAll();
+        if (state.settings.voiceEnabled) {
+          queueVietnameseSpeech('Đã bật giọng đọc cảm ơn! Giúp lão xây nhà nhé!');
+          notifyToast('Đã bật giọng đọc tiếng Việt');
+        } else {
+          if (hasSpeechSynthesisSupport()) {
+            try { window.speechSynthesis.cancel(); } catch (err) {}
+          }
+          speakQueue.length = 0;
+          resetSpeechSlot();
+          notifyToast('Đã tắt giọng đọc');
+        }
+      });
+
+      document.getElementById('btnCreateGift')?.addEventListener('click', () => {
+        const nameInp = document.getElementById('addGiftName');
+        const name = (nameInp?.value || '').trim();
+        if (!name) {
+          notifyToast('Vui lòng nhập tên quà tặng');
+          return;
+        }
+        const newGift = {
+          id: `custom-${Date.now()}`,
+          icon: (document.getElementById('addGiftIcon')?.value || '🎁').trim() || '🎁',
+          name,
+          coins: Math.max(1, parseInt(document.getElementById('addGiftCoins')?.value || '100', 10) || 100),
+          effect: document.getElementById('addGiftEffect')?.value || 'build',
+          speech: (document.getElementById('addGiftSpeech')?.value || '').trim() || 'Cảm ơn {name} tặng {coins} xu! Giúp lão xây nhà nhé!'
+        };
+        state.gifts.unshift(newGift);
+        persistState();
+        renderHudAll();
+        renderStudioModalContents();
+        if (nameInp) nameInp.value = '';
+        notifyToast(`Đã thêm "${newGift.name}"`);
+      });
+
+      document.getElementById('btnTriggerCustomGift')?.addEventListener('click', () => {
+        const vName = document.getElementById('customViewerName')?.value || 'Khán giả';
+        const gId = document.getElementById('customGiftPicker')?.value;
+        const rawCoin = document.getElementById('customCoinOverride')?.value;
+        const coinOverride = rawCoin ? parseInt(rawCoin, 10) : undefined;
+        const gObj = state.gifts.find((x) => x.id === gId) || state.gifts[0];
+        if (gObj) {
+          closeStudio();
+          executeGiftEvent(gObj, vName, coinOverride);
+        }
+      });
+
+      document.getElementById('btnTriggerCustomComment')?.addEventListener('click', () => {
+        const vName = document.getElementById('customViewerName')?.value || 'Khán giả';
+        const cmt = document.getElementById('customViewerComment')?.value || MOCK_COMMENTS[0];
+        closeStudio();
+        executeViewerComment(vName, cmt);
+      });
+
+      document.getElementById('toggleAutoLiveStream')?.addEventListener('change', (e) => {
+        folkAudio.unlock();
+        state.autoLiveStream = !!e.target.checked;
+        persistState();
+        syncAutoLiveStreamTimer();
+        notifyToast(state.autoLiveStream ? 'Đã bật luồng tương tác tự động' : 'Đã tắt luồng tương tác tự động');
+      });
+
+      document.getElementById('liveRoomTagInput')?.addEventListener('change', (e) => {
+        state.liveRoomTag = (e.target.value || '').trim();
+        persistState();
+      });
+
+      document.getElementById('optVoiceEnabled')?.addEventListener('change', (e) => {
+        state.settings.voiceEnabled = !!e.target.checked;
+        persistState();
+        renderHudAll();
+      });
+
+      document.getElementById('optReadComments')?.addEventListener('change', (e) => {
+        state.settings.readComments = !!e.target.checked;
+        persistState();
+      });
+
+      document.getElementById('voicePickerSelect')?.addEventListener('change', (e) => {
+        state.settings.voiceName = e.target.value;
+        persistState();
+      });
+
+      document.getElementById('optVoiceRate')?.addEventListener('input', (e) => {
+        state.settings.voiceRate = parseFloat(e.target.value) || 1.05;
+        const lbl = document.getElementById('voiceRateLabel');
+        if (lbl) lbl.textContent = `${Number(state.settings.voiceRate).toFixed(2)}x`;
+        persistState();
+      });
+
+      document.getElementById('btnPreviewSpeech')?.addEventListener('click', () => {
+        folkAudio.unlock();
+        unlockSpeechEngine();
+        state.settings.voiceEnabled = true;
+        persistState();
+        renderHudAll();
+        queueVietnameseSpeech(
+          composeGratitudeSpeech(
+            'Ebenhyý',
+            'Vật liệu',
+            500,
+            'Cảm ơn Ebenhyý, có gạch có ngói là lão yên tâm rồi! Giúp lão xây nhà nhé!'
+          )
+        );
+      });
+
+      document.getElementById('optMusicEnabled')?.addEventListener('change', (e) => {
+        folkAudio.unlock();
+        state.settings.musicEnabled = !!e.target.checked;
+        persistState();
+        renderHudAll();
+        if (state.settings.musicEnabled) folkAudio.startBgMusic();
+        else folkAudio.stopBgMusic();
+      });
+
+      document.getElementById('optMusicVol')?.addEventListener('input', (e) => {
+        state.settings.musicVol = parseFloat(e.target.value) || 0;
+        const lbl = document.getElementById('musicVolLabel');
+        if (lbl) lbl.textContent = `${Math.round(state.settings.musicVol * 100)}%`;
+        persistState();
+      });
+
+      document.getElementById('optSfxVol')?.addEventListener('input', (e) => {
+        state.settings.sfxVol = parseFloat(e.target.value) || 0;
+        const lbl = document.getElementById('sfxVolLabel');
+        if (lbl) lbl.textContent = `${Math.round(state.settings.sfxVol * 100)}%`;
+        persistState();
+      });
+
+      document.getElementById('btnSaveCoinsDirect')?.addEventListener('click', () => {
+        const val = parseInt(document.getElementById('setCoinsDirectInput')?.value || '0', 10);
+        if (!isNaN(val) && val >= 0) {
+          state.totalCoins = val;
+          persistState();
+          renderHudAll();
+          notifyToast(`Đã cập nhật ${formatShortCoins(val)} xu`);
+        }
+      });
+
+      document.querySelectorAll('.bump-coins-btn').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const add = parseInt(btn.getAttribute('data-bump-coins') || '0', 10);
+          state.totalCoins = Math.max(0, state.totalCoins + add);
+          persistState();
+          renderHudAll();
+          renderStudioModalContents();
+          notifyToast(`Đã cộng thêm ${add.toLocaleString('vi-VN')} xu`);
+        });
+      });
+
+      document.getElementById('btnResetDefaults')?.addEventListener('click', () => {
+        if (liveStreamInterval) clearInterval(liveStreamInterval);
+        disconnectTikTokLiveBridge(true);
+        state = defaultAppState();
+        persistState();
+        renderHudAll();
+        renderStudioModalContents();
+        notifyToast('Đã khôi phục mặc định (8,7k · Nhà cấp 1/5)');
+      });
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      wireControls();
+      renderHudAll();
+      syncAutoLiveStreamTimer();
+      villageCanvas.syncCanvasSize();
+      requestAnimationFrame(renderLoop);
+    });
+
+    ['pointerdown', 'touchstart', 'click'].forEach((evt) => {
+      window.addEventListener(
+        evt,
+        () => {
+          unlockSpeechEngine();
+          flushSpeechQueue();
+        },
+        { passive: true }
+      );
     });
   </script>
 </body>
