@@ -1,0 +1,1885 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Giúp Lão Xây Nhà — TikTok Live</title>
+  <style>
+    /* =========================================================================
+       1. NỀN TỔNG THỂ & KHUNG DỌC CHUẨN 9:16 (CSS NỘI TUYẾN)
+       ========================================================================= */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100dvh;
+      min-height: 100vh;
+      overflow: hidden;
+      background: radial-gradient(circle at 50% 25%, #2d1d10 0%, #140c06 72%, #080503 100%);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      color: #fffbeb;
+      user-select: none;
+    }
+
+    .app-viewport {
+      width: 100%;
+      height: 100dvh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+    }
+
+    .phone-frame {
+      position: relative;
+      width: 100%;
+      max-width: 440px;
+      height: 100dvh;
+      overflow: hidden;
+      background: #87ceeb;
+      box-shadow: 0 24px 64px rgba(0, 0, 0, 0.85);
+    }
+
+    @media (min-width: 600px) {
+      .phone-frame {
+        height: min(96dvh, 840px);
+        aspect-ratio: 9 / 16;
+        border-radius: 26px;
+        border: 2px solid rgba(251, 191, 36, 0.35);
+      }
+    }
+
+    #villageCanvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+      z-index: 1;
+    }
+
+    .hud-overlay {
+      position: relative;
+      z-index: 10;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 10px 10px 12px;
+      pointer-events: none;
+    }
+
+    .wood-panel {
+      background: linear-gradient(180deg, rgba(66, 38, 17, 0.93) 0%, rgba(36, 20, 8, 0.96) 100%);
+      border: 1.5px solid rgba(245, 194, 107, 0.65);
+      box-shadow: inset 0 1px 0 rgba(255, 241, 194, 0.25), 0 6px 18px rgba(0, 0, 0, 0.52);
+      backdrop-filter: blur(4px);
+    }
+
+    .stroke-shadow {
+      text-shadow:
+        -1.2px -1.2px 0 #1c1108,
+         1.2px -1.2px 0 #1c1108,
+        -1.2px  1.2px 0 #1c1108,
+         1.2px  1.2px 0 #1c1108,
+         0 2px 6px rgba(0, 0, 0, 0.8);
+    }
+
+    /* =========================================================================
+       2. THANH TIẾN ĐỘ XÂY NHÀ 5 CẤP (1 = 100 XÂY NHÀ, KHÔNG CHỮ "XU")
+       ========================================================================= */
+    .top-bar {
+      pointer-events: auto;
+      border-radius: 16px;
+      padding: 9px 12px;
+    }
+
+    .top-header-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      margin-bottom: 5px;
+    }
+
+    .game-title {
+      font-size: 14px;
+      font-weight: 900;
+      color: #fde68a;
+    }
+
+    .level-badge {
+      padding: 2px 9px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, #b45309, #d97706);
+      border: 1px solid rgba(254, 243, 199, 0.65);
+      font-size: 11px;
+      font-weight: 900;
+      color: #fffbeb;
+    }
+
+    .score-display-row {
+      display: flex;
+      align-items: baseline;
+      justify-content: center;
+      gap: 6px;
+      margin-bottom: 5px;
+    }
+
+    .score-main {
+      font-size: 22px;
+      font-weight: 900;
+      color: #fcd34d;
+      line-height: 1.1;
+    }
+
+    .score-target {
+      font-size: 13px;
+      font-weight: 800;
+      color: #fef3c7;
+    }
+
+    .progress-track {
+      position: relative;
+      width: 100%;
+      height: 16px;
+      border-radius: 999px;
+      background: rgba(15, 10, 6, 0.85);
+      border: 1px solid rgba(252, 211, 77, 0.45);
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      border-radius: 999px;
+      background: linear-gradient(90deg, #f59e0b 0%, #facc15 55%, #fef08a 100%);
+      transition: width 0.35s ease;
+    }
+
+    .progress-label {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10.5px;
+      font-weight: 900;
+      color: #ffffff;
+    }
+
+    .sub-rule-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 5px;
+      font-size: 10.5px;
+      font-weight: 700;
+      color: #fde68a;
+    }
+
+    .live-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 1px 7px;
+      border-radius: 999px;
+      background: rgba(0, 0, 0, 0.45);
+      font-size: 10px;
+      color: #d6d3d1;
+    }
+
+    .live-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #78716c;
+    }
+
+    .live-dot.connected {
+      background: #22c55e;
+      box-shadow: 0 0 8px #22c55e;
+    }
+
+    /* =========================================================================
+       3. THÔNG BÁO NỔI & LỊCH SỬ TƯƠNG TÁC
+       ========================================================================= */
+    .middle-zone {
+      position: relative;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 8px 0;
+      overflow: hidden;
+    }
+
+    .floating-alerts {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 5px;
+      min-height: 36px;
+    }
+
+    .float-banner {
+      padding: 5px 12px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, rgba(180, 83, 9, 0.94), rgba(120, 53, 15, 0.94));
+      border: 1.5px solid #fde047;
+      font-size: 12px;
+      font-weight: 900;
+      color: #fffbeb;
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.45);
+      animation: floatFade 3s ease forwards;
+      text-align: center;
+      max-width: 94%;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    @keyframes floatFade {
+      0% { opacity: 0; transform: translateY(10px) scale(0.92); }
+      15% { opacity: 1; transform: translateY(0) scale(1); }
+      82% { opacity: 1; transform: translateY(-4px); }
+      100% { opacity: 0; transform: translateY(-14px); }
+    }
+
+    .feed-box {
+      align-self: flex-start;
+      max-width: 78%;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      margin-bottom: 4px;
+    }
+
+    .feed-item {
+      padding: 4px 9px;
+      border-radius: 10px;
+      background: rgba(24, 15, 8, 0.72);
+      border: 1px solid rgba(251, 191, 36, 0.3);
+      font-size: 11px;
+      font-weight: 700;
+      color: #fef3c7;
+      line-height: 1.25;
+      backdrop-filter: blur(2px);
+    }
+
+    .feed-item strong {
+      color: #fcd34d;
+    }
+
+    /* =========================================================================
+       4. DẢI QUÀ TẶNG & THANH NÚT ĐIỀU KHIỂN
+       ========================================================================= */
+    .bottom-dock {
+      pointer-events: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+    }
+
+    .gift-strip {
+      border-radius: 14px;
+      padding: 7px;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 6px;
+      max-height: 148px;
+      overflow-y: auto;
+    }
+
+    .gift-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2px;
+      padding: 6px 4px;
+      border-radius: 11px;
+      background: rgba(255, 251, 235, 0.08);
+      border: 1px solid rgba(251, 191, 36, 0.32);
+      color: #fffbeb;
+      cursor: pointer;
+      transition: transform 0.12s ease, background 0.15s ease;
+    }
+
+    .gift-card:active {
+      transform: scale(0.93);
+      background: rgba(251, 191, 36, 0.28);
+    }
+
+    .gift-icon {
+      font-size: 20px;
+      line-height: 1.1;
+    }
+
+    .gift-name {
+      font-size: 10.5px;
+      font-weight: 800;
+      color: #fef3c7;
+      text-align: center;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 100%;
+    }
+
+    .gift-val {
+      font-size: 10px;
+      font-weight: 900;
+      color: #fcd34d;
+      background: rgba(0, 0, 0, 0.42);
+      padding: 1px 6px;
+      border-radius: 999px;
+    }
+
+    .control-bar {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 7px;
+    }
+
+    .ctrl-btn {
+      height: 38px;
+      border-radius: 12px;
+      border: 1.5px solid rgba(253, 224, 71, 0.55);
+      font-size: 12.5px;
+      font-weight: 900;
+      color: #fffbeb;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.45);
+      transition: transform 0.12s ease, opacity 0.15s ease;
+    }
+
+    .ctrl-btn:active {
+      transform: scale(0.95);
+    }
+
+    .btn-demo {
+      background: linear-gradient(180deg, #16a34a, #15803d);
+    }
+
+    .btn-demo.active {
+      background: linear-gradient(180deg, #dc2626, #b91c1c);
+    }
+
+    .btn-audio {
+      background: linear-gradient(180deg, #0284c7, #0369a1);
+    }
+
+    .btn-audio.muted {
+      background: linear-gradient(180deg, #57534e, #44403c);
+      opacity: 0.85;
+    }
+
+    .btn-edit {
+      background: linear-gradient(180deg, #d97706, #b45309);
+    }
+
+    /* =========================================================================
+       5. MODAL CẤU HÌNH ("SỬA")
+       ========================================================================= */
+    .modal-backdrop {
+      position: absolute;
+      inset: 0;
+      z-index: 30;
+      background: rgba(10, 6, 3, 0.82);
+      backdrop-filter: blur(5px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 12px;
+    }
+
+    .modal-backdrop.hidden {
+      display: none !important;
+    }
+
+    .modal-card {
+      width: 100%;
+      max-height: 92%;
+      border-radius: 18px;
+      background: #1f140c;
+      border: 1.5px solid rgba(251, 191, 36, 0.65);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.85);
+    }
+
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 11px 14px;
+      background: #2c1c10;
+      border-bottom: 1px solid rgba(251, 191, 36, 0.3);
+    }
+
+    .modal-title {
+      font-size: 14px;
+      font-weight: 900;
+      color: #fde68a;
+    }
+
+    .modal-close {
+      width: 30px;
+      height: 30px;
+      border-radius: 8px;
+      border: 1px solid rgba(251, 191, 36, 0.4);
+      background: rgba(0, 0, 0, 0.35);
+      color: #fef3c7;
+      font-size: 15px;
+      font-weight: 900;
+      cursor: pointer;
+    }
+
+    .tab-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      background: #160e08;
+      border-bottom: 1px solid rgba(251, 191, 36, 0.25);
+    }
+
+    .tab-btn {
+      padding: 10px 6px;
+      border: none;
+      background: transparent;
+      color: #a8a29e;
+      font-size: 12px;
+      font-weight: 800;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+    }
+
+    .tab-btn.active {
+      color: #fcd34d;
+      border-bottom-color: #f59e0b;
+      background: rgba(245, 158, 11, 0.1);
+    }
+
+    .modal-body {
+      padding: 12px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 11px;
+    }
+
+    .tab-pane.hidden {
+      display: none !important;
+    }
+
+    .field-group {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .field-label {
+      font-size: 11px;
+      font-weight: 800;
+      color: #fde68a;
+    }
+
+    .field-input {
+      width: 100%;
+      padding: 8px 10px;
+      border-radius: 10px;
+      border: 1px solid rgba(251, 191, 36, 0.4);
+      background: #120b06;
+      color: #fffbeb;
+      font-size: 12.5px;
+      outline: none;
+    }
+
+    .field-input:focus {
+      border-color: #facc15;
+    }
+
+    .status-box {
+      padding: 8px 10px;
+      border-radius: 10px;
+      background: rgba(0, 0, 0, 0.45);
+      border: 1px solid rgba(251, 191, 36, 0.25);
+      font-size: 11.5px;
+      line-height: 1.45;
+      color: #e7e5e4;
+      word-break: break-word;
+    }
+
+    .btn-row-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .action-btn {
+      padding: 9px 10px;
+      border-radius: 10px;
+      border: none;
+      font-size: 12px;
+      font-weight: 900;
+      color: #fffbeb;
+      cursor: pointer;
+    }
+
+    .action-primary {
+      background: linear-gradient(180deg, #16a34a, #15803d);
+    }
+
+    .action-danger {
+      background: linear-gradient(180deg, #dc2626, #991b1b);
+    }
+
+    .action-amber {
+      background: linear-gradient(180deg, #d97706, #b45309);
+    }
+
+    .tier-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 5px;
+    }
+
+    .tier-item {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      text-align: center;
+      font-size: 10px;
+      color: #fcd34d;
+      font-weight: 800;
+    }
+
+    .tier-item input {
+      padding: 6px 4px;
+      text-align: center;
+      font-size: 11px;
+    }
+
+    .gift-edit-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      max-height: 185px;
+      overflow-y: auto;
+    }
+
+    .gift-edit-row {
+      display: grid;
+      grid-template-columns: 38px 1fr 68px 32px;
+      gap: 5px;
+      align-items: center;
+    }
+
+    .gift-edit-row input {
+      padding: 6px 6px;
+      font-size: 11.5px;
+    }
+
+    .del-gift-btn {
+      height: 30px;
+      border-radius: 8px;
+      border: 1px solid rgba(239, 68, 68, 0.5);
+      background: rgba(185, 28, 28, 0.45);
+      color: #fecaca;
+      font-weight: 900;
+      cursor: pointer;
+    }
+
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 10px;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.05);
+      font-size: 12px;
+      font-weight: 800;
+      color: #fef3c7;
+    }
+
+    .toggle-row input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      accent-color: #f59e0b;
+    }
+  </style>
+</head>
+<body>
+  <div class="app-viewport">
+    <div class="phone-frame">
+      <canvas id="villageCanvas"></canvas>
+
+      <div class="hud-overlay">
+        <!-- THANH TIẾN ĐỘ XÂY NHÀ 5 CẤP -->
+        <header class="top-bar wood-panel">
+          <div class="top-header-row">
+            <span class="game-title stroke-shadow">🏠 Giúp Lão Xây Nhà</span>
+            <span id="levelBadge" class="level-badge">Cấp 1/5</span>
+          </div>
+
+          <div class="score-display-row">
+            <span id="currentScoreText" class="score-main stroke-shadow">0</span>
+            <span id="targetScoreText" class="score-target stroke-shadow">/ 20.000 xây nhà</span>
+          </div>
+
+          <div class="progress-track">
+            <div id="progressFill" class="progress-fill"></div>
+            <div id="progressPercent" class="progress-label stroke-shadow">0%</div>
+          </div>
+
+          <div class="sub-rule-row">
+            <span>Quy đổi: 1 quà = 100 xây nhà</span>
+            <span class="live-pill">
+              <span id="liveDot" class="live-dot"></span>
+              <span id="liveStatusMini">Chế độ thử</span>
+            </span>
+          </div>
+        </header>
+
+        <!-- THÔNG BÁO BAY LÊN & LỊCH SỬ TƯƠNG TÁC -->
+        <main class="middle-zone">
+          <div id="floatingAlerts" class="floating-alerts"></div>
+          <div id="feedBox" class="feed-box"></div>
+        </main>
+
+        <!-- DẢI QUÀ TẶNG & NÚT ĐIỀU KHIỂN -->
+        <footer class="bottom-dock">
+          <div id="giftStrip" class="gift-strip wood-panel"></div>
+
+          <div class="control-bar">
+            <button id="demoBtn" class="ctrl-btn btn-demo" type="button">▶ Demo</button>
+            <button id="audioBtn" class="ctrl-btn btn-audio" type="button">🔊 Âm thanh</button>
+            <button id="editBtn" class="ctrl-btn btn-edit" type="button">⚙️ Sửa</button>
+          </div>
+        </footer>
+      </div>
+
+      <!-- MODAL CẤU HÌNH ("SỬA") -->
+      <div id="configModal" class="modal-backdrop hidden">
+        <div class="modal-card">
+          <div class="modal-header">
+            <span class="modal-title">⚙️ Cấu Hình Giúp Lão Xây Nhà</span>
+            <button id="closeModalBtn" class="modal-close" type="button">✕</button>
+          </div>
+
+          <div class="tab-row">
+            <button class="tab-btn active" data-tab="tabLive" type="button">Kết nối LIVE</button>
+            <button class="tab-btn" data-tab="tabSettings" type="button">Cài đặt quà &amp; Mốc</button>
+          </div>
+
+          <div class="modal-body">
+            <!-- TAB 1: KẾT NỐI LIVE -->
+            <div id="tabLive" class="tab-pane" style="display:flex;flex-direction:column;gap:10px;">
+              <div class="field-group">
+                <label class="field-label" for="bridgeUrlInput">URL Bridge (WebSocket)</label>
+                <input
+                  id="bridgeUrlInput"
+                  class="field-input"
+                  type="text"
+                  value="wss://tiktok-bridge-1-gw2n.onrender.com"
+                  placeholder="wss://tiktok-bridge-1-gw2n.onrender.com"
+                />
+              </div>
+
+              <div class="field-group">
+                <label class="field-label" for="tiktokIdInput">ID TikTok Live (@id kênh đang phát trực tiếp)</label>
+                <input
+                  id="tiktokIdInput"
+                  class="field-input"
+                  type="text"
+                  value="chuyennharua19"
+                  placeholder="chuyennharua19"
+                />
+              </div>
+
+              <div class="btn-row-2">
+                <button id="connectLiveBtn" class="action-btn action-primary" type="button">Kết nối ID</button>
+                <button id="disconnectLiveBtn" class="action-btn action-danger" type="button">Ngắt kết nối</button>
+              </div>
+
+              <div id="liveLogBox" class="status-box">
+                Trạng thái: Sẵn sàng kết nối tới wss://tiktok-bridge-1-gw2n.onrender.com cho kênh @chuyennharua19.
+              </div>
+            </div>
+
+            <!-- TAB 2: CÀI ĐẶT QUÀ & MỐC -->
+            <div id="tabSettings" class="tab-pane hidden" style="display:flex;flex-direction:column;gap:10px;">
+              <div class="field-group">
+                <label class="field-label">5 Mốc Cấp Nhà (Điểm xây nhà)</label>
+                <div class="tier-grid">
+                  <div class="tier-item"><span>Cấp 1</span><input id="tierInput0" class="field-input" type="number" /></div>
+                  <div class="tier-item"><span>Cấp 2</span><input id="tierInput1" class="field-input" type="number" /></div>
+                  <div class="tier-item"><span>Cấp 3</span><input id="tierInput2" class="field-input" type="number" /></div>
+                  <div class="tier-item"><span>Cấp 4</span><input id="tierInput3" class="field-input" type="number" /></div>
+                  <div class="tier-item"><span>Cấp 5</span><input id="tierInput4" class="field-input" type="number" /></div>
+                </div>
+              </div>
+
+              <label class="toggle-row">
+                <span>🎵 Nhạc nền ngũ cung &amp; hiệu ứng âm thanh</span>
+                <input id="musicToggle" type="checkbox" checked />
+              </label>
+
+              <label class="toggle-row">
+                <span>🗣️ Đọc lời cảm ơn tiếng Việt (không đọc chữ xu)</span>
+                <input id="voiceToggle" type="checkbox" checked />
+              </label>
+
+              <div class="field-group">
+                <div style="display:flex;justify-content:space-between;align-items:center;">
+                  <label class="field-label">Danh sách quà tặng (1 quà = 100 xây nhà)</label>
+                  <button id="addGiftBtn" class="action-btn action-amber" style="padding:4px 9px;font-size:11px;" type="button">+ Thêm quà</button>
+                </div>
+                <div id="giftEditList" class="gift-edit-list"></div>
+              </div>
+
+              <div class="btn-row-2">
+                <button id="saveSettingsBtn" class="action-btn action-primary" type="button">Lưu cài đặt</button>
+                <button id="resetProgressBtn" class="action-btn action-danger" type="button">Đặt lại về 0</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /* =========================================================================
+       1. CẤU HÌNH MẶC ĐỊNH & TRẠNG THÁI GAME
+       ========================================================================= */
+    const STORAGE_KEY = 'giup_lao_xay_nha_5cap_v4';
+    const CONVERSION_RATE = 100; // 1 quà = 100 xây nhà
+    const DEFAULT_BRIDGE_URL = 'wss://tiktok-bridge-1-gw2n.onrender.com';
+    const DEFAULT_TIKTOK_ID = 'chuyennharua19';
+    const DEFAULT_TIERS = [20000, 40000, 90000, 140000, 200000];
+
+    const DEFAULT_GIFTS = [
+      { id: 'rose', icon: '🌹', name: 'Hoa Hồng', value: 1 },
+      { id: 'tea', icon: '🍵', name: 'Trà Nóng', value: 5 },
+      { id: 'brick', icon: '🧱', name: 'Gạch Đỏ', value: 10 },
+      { id: 'cement', icon: '🏗️', name: 'Xi Măng', value: 30 },
+      { id: 'wood', icon: '🪵', name: 'Gỗ Lim', value: 50 },
+      { id: 'tile', icon: '🏮', name: 'Ngói Mới', value: 100 },
+      { id: 'feast', icon: '🍲', name: 'Mâm Cơm', value: 200 },
+      { id: 'gold', icon: '🏆', name: 'Đại Cát', value: 500 }
+    ];
+
+    let state = {
+      buildScore: 0,
+      tiers: [...DEFAULT_TIERS],
+      gifts: JSON.parse(JSON.stringify(DEFAULT_GIFTS)),
+      bridgeUrl: DEFAULT_BRIDGE_URL,
+      tiktokId: DEFAULT_TIKTOK_ID,
+      musicEnabled: true,
+      voiceEnabled: true,
+      audioEnabled: true
+    };
+
+    function sanitizeNoCoinWord(text) {
+      if (!text) return '';
+      return String(text)
+        .replace(/\bxu\b/gi, '')
+        .replace(/\s{2,}/g, ' ')
+        .trim();
+    }
+
+    function loadState() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return;
+        const parsed = JSON.parse(raw);
+        if (typeof parsed.buildScore === 'number' && parsed.buildScore >= 0) {
+          state.buildScore = parsed.buildScore;
+        }
+        if (Array.isArray(parsed.tiers) && parsed.tiers.length === 5) {
+          state.tiers = parsed.tiers.map((v, i) => Math.max(100, Number(v) || DEFAULT_TIERS[i]));
+        }
+        if (Array.isArray(parsed.gifts) && parsed.gifts.length > 0) {
+          state.gifts = parsed.gifts.map((g, i) => ({
+            id: g.id || `gift_${i}`,
+            icon: g.icon || '🎁',
+            name: sanitizeNoCoinWord(g.name) || `Quà ${i + 1}`,
+            value: Math.max(1, Number(g.value) || 1)
+          }));
+        }
+        if (typeof parsed.bridgeUrl === 'string' && parsed.bridgeUrl.trim()) {
+          state.bridgeUrl = parsed.bridgeUrl.trim();
+        }
+        if (typeof parsed.tiktokId === 'string' && parsed.tiktokId.trim()) {
+          state.tiktokId = parsed.tiktokId.trim();
+        }
+        if (typeof parsed.musicEnabled === 'boolean') {
+          state.musicEnabled = parsed.musicEnabled;
+        }
+        if (typeof parsed.voiceEnabled === 'boolean') {
+          state.voiceEnabled = parsed.voiceEnabled;
+        }
+      } catch (e) {
+        // Bỏ qua lỗi đọc localStorage
+      }
+    }
+
+    function saveState() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      } catch (e) {
+        // Bỏ qua lỗi ghi localStorage
+      }
+    }
+
+    function formatNumber(num) {
+      return Math.round(num).toLocaleString('vi-VN');
+    }
+
+    /* =========================================================================
+       2. GIỌNG NÓI TIẾNG VIỆT (SPEECHSYNTHESIS) & ÂM THANH NGŨ CUNG
+       ========================================================================= */
+    function speakVietnamese(rawText) {
+      if (!state.voiceEnabled || !state.audioEnabled) return;
+      if (!('speechSynthesis' in window)) return;
+      try {
+        const cleanText = sanitizeNoCoinWord(rawText);
+        if (!cleanText) return;
+        window.speechSynthesis.cancel();
+        const utter = new SpeechSynthesisUtterance(cleanText);
+        utter.lang = 'vi-VN';
+        utter.rate = 1.03;
+        utter.pitch = 1.0;
+
+        const voices = window.speechSynthesis.getVoices();
+        const viVoice = voices.find((v) => v.lang && v.lang.toLowerCase().includes('vi'));
+        if (viVoice) utter.voice = viVoice;
+
+        window.speechSynthesis.speak(utter);
+      } catch (e) {
+        // Bỏ qua nếu trình duyệt chặn phát giọng nói
+      }
+    }
+
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.onvoiceschanged = () => {
+        window.speechSynthesis.getVoices();
+      };
+    }
+
+    let audioCtx = null;
+    let bgmTimer = null;
+    let pentatonicStep = 0;
+    const PENTATONIC_FREQS = [261.63, 293.66, 329.63, 392.00, 440.00, 523.25, 440.00, 392.00, 329.63, 293.66];
+
+    function ensureAudioContext() {
+      try {
+        if (!audioCtx) {
+          const Ctx = window.AudioContext || window.webkitAudioContext;
+          if (Ctx) audioCtx = new Ctx();
+        }
+        if (audioCtx && audioCtx.state === 'suspended') {
+          audioCtx.resume().catch(() => {});
+        }
+      } catch (e) {}
+    }
+
+    function playPluckNote(freq, duration = 0.45, volume = 0.035) {
+      if (!state.audioEnabled) return;
+      ensureAudioContext();
+      if (!audioCtx) return;
+      try {
+        const now = audioCtx.currentTime;
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(freq, now);
+
+        gain.gain.setValueAtTime(0.0001, now);
+        gain.gain.linearRampToValueAtTime(volume, now + 0.03);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(now);
+        osc.stop(now + duration + 0.02);
+      } catch (e) {}
+    }
+
+    function startBackgroundMusic() {
+      if (bgmTimer) return;
+      bgmTimer = setInterval(() => {
+        if (!state.audioEnabled || !state.musicEnabled) return;
+        const freq = PENTATONIC_FREQS[pentatonicStep % PENTATONIC_FREQS.length];
+        pentatonicStep++;
+        playPluckNote(freq, 0.55, 0.025);
+      }, 650);
+    }
+
+    function playGiftSound(isBig) {
+      if (!state.audioEnabled) return;
+      playPluckNote(523.25, 0.25, 0.07);
+      setTimeout(() => playPluckNote(659.25, 0.25, 0.07), 90);
+      setTimeout(() => playPluckNote(783.99, 0.35, 0.08), 180);
+      if (isBig) {
+        setTimeout(() => playPluckNote(1046.5, 0.5, 0.09), 270);
+      }
+    }
+
+    /* =========================================================================
+       3. THANG NHÀ 5 CẤP & CẬP NHẬT HUD
+       ========================================================================= */
+    function getHouseProgress() {
+      const score = state.buildScore;
+      const tiers = state.tiers;
+      let level = 1;
+      let prevCap = 0;
+      let nextCap = tiers[0];
+
+      if (score >= tiers[4]) {
+        level = 5;
+        prevCap = tiers[3];
+        nextCap = tiers[4];
+      } else if (score >= tiers[3]) {
+        level = 5;
+        prevCap = tiers[3];
+        nextCap = tiers[4];
+      } else if (score >= tiers[2]) {
+        level = 4;
+        prevCap = tiers[2];
+        nextCap = tiers[3];
+      } else if (score >= tiers[1]) {
+        level = 3;
+        prevCap = tiers[1];
+        nextCap = tiers[2];
+      } else if (score >= tiers[0]) {
+        level = 2;
+        prevCap = tiers[0];
+        nextCap = tiers[1];
+      } else {
+        level = 1;
+        prevCap = 0;
+        nextCap = tiers[0];
+      }
+
+      const span = Math.max(1, nextCap - prevCap);
+      const rawPct = score >= tiers[4] ? 100 : Math.min(100, Math.max(0, ((score - prevCap) / span) * 100));
+      return {
+        level,
+        nextCap,
+        percent: Math.round(rawPct)
+      };
+    }
+
+    function updateHud() {
+      const info = getHouseProgress();
+      document.getElementById('levelBadge').textContent = `Cấp ${info.level}/5`;
+      document.getElementById('currentScoreText').textContent = formatNumber(state.buildScore);
+      document.getElementById('targetScoreText').textContent = `/ ${formatNumber(info.nextCap)} xây nhà`;
+      document.getElementById('progressFill').style.width = `${info.percent}%`;
+      document.getElementById('progressPercent').textContent = `${info.percent}%`;
+    }
+
+    function escapeHtml(str) {
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    function pushFloatingAlert(text) {
+      const container = document.getElementById('floatingAlerts');
+      const banner = document.createElement('div');
+      banner.className = 'float-banner stroke-shadow';
+      banner.textContent = sanitizeNoCoinWord(text);
+      container.appendChild(banner);
+      while (container.children.length > 3) {
+        container.removeChild(container.firstChild);
+      }
+      setTimeout(() => {
+        if (banner.parentNode) banner.parentNode.removeChild(banner);
+      }, 3050);
+    }
+
+    function pushFeedMessage(user, message) {
+      const feed = document.getElementById('feedBox');
+      const item = document.createElement('div');
+      item.className = 'feed-item';
+      const cleanUser = sanitizeNoCoinWord(user || 'Khán giả');
+      const cleanMsg = sanitizeNoCoinWord(message || '');
+      item.innerHTML = `<strong>${escapeHtml(cleanUser)}:</strong> ${escapeHtml(cleanMsg)}`;
+      feed.appendChild(item);
+      while (feed.children.length > 4) {
+        feed.removeChild(feed.firstChild);
+      }
+    }
+
+    /* =========================================================================
+       4. CANVAS SÂN LÀNG: NGÔI NHÀ Ở GIỮA, CỤ GIÀ CHIẾU CÓI, DÂN LÀNG & KHÁN GIẢ
+       ========================================================================= */
+    const canvas = document.getElementById('villageCanvas');
+    const ctx = canvas.getContext('2d');
+    let viewW = 390;
+    let viewH = 844;
+    let animTime = 0;
+    let elderThankTimer = 0;
+    let houseSparkleTimer = 0;
+
+    const walkers = [];
+    const particles = [];
+    const VISITOR_COLORS = ['#ef4444', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4'];
+
+    function resizeCanvas() {
+      const rect = canvas.parentElement.getBoundingClientRect();
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      viewW = Math.max(280, rect.width);
+      viewH = Math.max(500, rect.height);
+      canvas.width = Math.round(viewW * dpr);
+      canvas.height = Math.round(viewH * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+
+    window.addEventListener('resize', resizeCanvas);
+
+    function spawnVisitorWalker(name, labelText, isGift) {
+      const fromLeft = Math.random() < 0.5;
+      const startX = fromLeft ? -35 : viewW + 35;
+      const targetX = fromLeft
+        ? viewW * (0.22 + Math.random() * 0.14)
+        : viewW * (0.64 + Math.random() * 0.14);
+      const yPos = viewH * (0.63 + Math.random() * 0.08);
+      const color = VISITOR_COLORS[Math.floor(Math.random() * VISITOR_COLORS.length)];
+
+      walkers.push({
+        name: sanitizeNoCoinWord(name || 'Khán giả'),
+        label: sanitizeNoCoinWord(labelText || ''),
+        isGift,
+        x: startX,
+        y: yPos,
+        targetX,
+        color,
+        state: 'walkIn',
+        stayTimer: 3.5,
+        phase: Math.random() * Math.PI * 2
+      });
+
+      if (walkers.length > 6) {
+        walkers.shift();
+      }
+    }
+
+    function spawnCelebrationParticles(x, y, emojiList) {
+      for (let i = 0; i < 12; i++) {
+        const angle = -Math.PI * 0.15 - Math.random() * Math.PI * 0.7;
+        const speed = 45 + Math.random() * 85;
+        particles.push({
+          x: x + (Math.random() - 0.5) * 40,
+          y: y + (Math.random() - 0.5) * 20,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed,
+          life: 1.2 + Math.random() * 0.6,
+          maxLife: 1.6,
+          symbol: emojiList[i % emojiList.length]
+        });
+      }
+    }
+
+    function drawCloud(cx, cy, scale) {
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.scale(scale, scale);
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
+      ctx.beginPath();
+      ctx.arc(0, 0, 16, 0, Math.PI * 2);
+      ctx.arc(15, -4, 20, 0, Math.PI * 2);
+      ctx.arc(32, 0, 15, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+
+    function drawBambooCluster(bx, by, t) {
+      ctx.save();
+      const sway = Math.sin(t * 1.8) * 3;
+      for (let i = -2; i <= 2; i++) {
+        const ox = bx + i * 8;
+        const topX = ox + sway + i * 2;
+        const topY = by - 78 - Math.abs(i) * 6;
+        ctx.strokeStyle = i % 2 === 0 ? '#15803d' : '#166534';
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.moveTo(ox, by);
+        ctx.quadraticCurveTo(ox + sway * 0.4, by - 40, topX, topY);
+        ctx.stroke();
+
+        ctx.fillStyle = '#22c55e';
+        ctx.beginPath();
+        ctx.ellipse(topX + 8, topY + 8, 12, 4, 0.3, 0, Math.PI * 2);
+        ctx.ellipse(topX - 8, topY + 14, 11, 3.5, -0.35, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.restore();
+    }
+
+    function drawBackgroundScene(w, h, t) {
+      const skyGrad = ctx.createLinearGradient(0, 0, 0, h * 0.48);
+      skyGrad.addColorStop(0, '#38bdf8');
+      skyGrad.addColorStop(0.65, '#bae6fd');
+      skyGrad.addColorStop(1, '#fef3c7');
+      ctx.fillStyle = skyGrad;
+      ctx.fillRect(0, 0, w, h * 0.5);
+
+      ctx.fillStyle = 'rgba(254, 240, 138, 0.85)';
+      ctx.beginPath();
+      ctx.arc(w * 0.82, h * 0.18, 26, 0, Math.PI * 2);
+      ctx.fill();
+
+      drawCloud((t * 10) % (w + 120) - 60, h * 0.16, 0.9);
+      drawCloud(((t * 7) + w * 0.5) % (w + 140) - 70, h * 0.22, 0.75);
+
+      ctx.fillStyle = '#6ee7b7';
+      ctx.beginPath();
+      ctx.moveTo(0, h * 0.44);
+      ctx.quadraticCurveTo(w * 0.25, h * 0.31, w * 0.52, h * 0.43);
+      ctx.quadraticCurveTo(w * 0.78, h * 0.30, w, h * 0.42);
+      ctx.lineTo(w, h * 0.5);
+      ctx.lineTo(0, h * 0.5);
+      ctx.closePath();
+      ctx.fill();
+
+      drawBambooCluster(w * 0.08, h * 0.44, t);
+      drawBambooCluster(w * 0.91, h * 0.44, t + 1.5);
+
+      const yardGrad = ctx.createLinearGradient(0, h * 0.43, 0, h);
+      yardGrad.addColorStop(0, '#d9a76a');
+      yardGrad.addColorStop(0.45, '#c68b4b');
+      yardGrad.addColorStop(1, '#9a632c');
+      ctx.fillStyle = yardGrad;
+      ctx.fillRect(0, h * 0.43, w, h * 0.57);
+
+      ctx.fillStyle = '#4d7c0f';
+      ctx.fillRect(0, h * 0.425, w, 8);
+
+      // Lối đi từ cổng sân vào
+      ctx.fillStyle = 'rgba(254, 243, 199, 0.22)';
+      ctx.beginPath();
+      ctx.moveTo(w * 0.42, h * 0.62);
+      ctx.lineTo(w * 0.58, h * 0.62);
+      ctx.lineTo(w * 0.74, h * 0.85);
+      ctx.lineTo(w * 0.26, h * 0.85);
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    function drawCenterHouse(w, h, level) {
+      const hx = w * 0.50;
+      const hy = h * 0.44;
+      ctx.save();
+
+      if (houseSparkleTimer > 0) {
+        ctx.fillStyle = `rgba(253, 224, 71, ${Math.min(0.45, houseSparkleTimer * 0.35)})`;
+        ctx.beginPath();
+        ctx.ellipse(hx, hy - 10, 84, 56, 0, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // Nền móng đá giữa sân
+      ctx.fillStyle = '#78716c';
+      ctx.strokeStyle = '#44403c';
+      ctx.lineWidth = 2;
+      ctx.fillRect(hx - 60, hy + 20, 120, 11);
+      ctx.strokeRect(hx - 60, hy + 20, 120, 11);
+
+      if (level === 1) {
+        ctx.fillStyle = '#92400e';
+        ctx.fillRect(hx - 50, hy - 26, 8, 46);
+        ctx.fillRect(hx + 42, hy - 26, 8, 46);
+        ctx.fillRect(hx - 54, hy - 30, 108, 7);
+
+        ctx.fillStyle = '#dc6b4a';
+        ctx.strokeStyle = '#7c2d12';
+        ctx.lineWidth = 1.6;
+        ctx.fillRect(hx - 48, hy + 2, 96, 18);
+        ctx.strokeRect(hx - 48, hy + 2, 96, 18);
+
+        ctx.beginPath();
+        ctx.moveTo(hx - 48, hy + 11);
+        ctx.lineTo(hx + 48, hy + 11);
+        ctx.stroke();
+      } else {
+        ctx.fillStyle = '#dc6b4a';
+        ctx.strokeStyle = '#7c2d12';
+        ctx.lineWidth = 2;
+        ctx.fillRect(hx - 52, hy - 30, 104, 50);
+        ctx.strokeRect(hx - 52, hy - 30, 104, 50);
+
+        ctx.fillStyle = '#78350f';
+        ctx.fillRect(hx - 13, hy - 6, 26, 26);
+        ctx.strokeRect(hx - 13, hy - 6, 26, 26);
+
+        if (level === 2) {
+          ctx.fillStyle = '#a16207';
+          ctx.beginPath();
+          ctx.moveTo(hx - 58, hy - 30);
+          ctx.lineTo(hx + 58, hy - 30);
+          ctx.lineTo(hx + 52, hy - 38);
+          ctx.lineTo(hx - 52, hy - 38);
+          ctx.closePath();
+          ctx.fill();
+          ctx.stroke();
+        }
+
+        if (level >= 3) {
+          ctx.fillStyle = '#b91c1c';
+          ctx.strokeStyle = '#7f1d1d';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.moveTo(hx - 64, hy - 30);
+          ctx.lineTo(hx, hy - 68);
+          ctx.lineTo(hx + 64, hy - 30);
+          ctx.closePath();
+          ctx.fill();
+          ctx.stroke();
+
+          ctx.strokeStyle = '#fcd34d';
+          ctx.lineWidth = 2.5;
+          ctx.beginPath();
+          ctx.moveTo(hx - 12, hy - 62);
+          ctx.lineTo(hx, hy - 68);
+          ctx.lineTo(hx + 12, hy - 62);
+          ctx.stroke();
+        }
+
+        if (level >= 4) {
+          ctx.fillStyle = '#fef08a';
+          ctx.strokeStyle = '#78350f';
+          ctx.lineWidth = 1.8;
+          ctx.fillRect(hx - 40, hy - 16, 17, 16);
+          ctx.strokeRect(hx - 40, hy - 16, 17, 16);
+          ctx.fillRect(hx + 23, hy - 16, 17, 16);
+          ctx.strokeRect(hx + 23, hy - 16, 17, 16);
+        }
+
+        if (level >= 5) {
+          ctx.fillStyle = '#ea580c';
+          ctx.strokeStyle = '#7c2d12';
+          ctx.lineWidth = 2;
+          ctx.fillRect(hx + 52, hy - 6, 28, 26);
+          ctx.strokeRect(hx + 52, hy - 6, 28, 26);
+
+          ctx.fillStyle = '#991b1b';
+          ctx.beginPath();
+          ctx.moveTo(hx + 50, hy - 6);
+          ctx.lineTo(hx + 66, hy - 22);
+          ctx.lineTo(hx + 83, hy - 6);
+          ctx.closePath();
+          ctx.fill();
+          ctx.stroke();
+
+          ctx.fillStyle = '#ef4444';
+          ctx.beginPath();
+          ctx.arc(hx - 24, hy - 24, 5, 0, Math.PI * 2);
+          ctx.arc(hx + 24, hy - 24, 5, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+      ctx.restore();
+    }
+
+    function drawElderOnMat(w, h, t) {
+      const ex = w * 0.50;
+      const ey = h * 0.56;
+      ctx.save();
+
+      ctx.fillStyle = '#fde68a';
+      ctx.strokeStyle = '#b45309';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(ex - 48, ey + 14);
+      ctx.lineTo(ex + 48, ey + 14);
+      ctx.lineTo(ex + 60, ey + 34);
+      ctx.lineTo(ex - 60, ey + 34);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.strokeStyle = '#dc2626';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(ex - 52, ey + 20);
+      ctx.lineTo(ex + 52, ey + 20);
+      ctx.stroke();
+
+      const bowOffset = elderThankTimer > 0 ? Math.sin(t * 14) * 3.5 : Math.sin(t * 2.5) * 1;
+
+      ctx.fillStyle = '#78350f';
+      ctx.beginPath();
+      ctx.ellipse(ex, ey + 11, 18, 15, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#fed7aa';
+      ctx.beginPath();
+      ctx.arc(ex, ey - 9 + bowOffset, 12, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#f8fafc';
+      ctx.beginPath();
+      ctx.arc(ex, ey - 13 + bowOffset, 12.5, Math.PI, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(ex, ey - 23 + bowOffset, 5.5, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#f1f5f9';
+      ctx.beginPath();
+      ctx.moveTo(ex - 5, ey - 2 + bowOffset);
+      ctx.lineTo(ex + 5, ey - 2 + bowOffset);
+      ctx.lineTo(ex, ey + 13 + bowOffset);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.strokeStyle = '#451a03';
+      ctx.lineWidth = 1.6;
+      ctx.beginPath();
+      ctx.arc(ex - 4, ey - 9 + bowOffset, 2.2, Math.PI, Math.PI * 2);
+      ctx.arc(ex + 4, ey - 9 + bowOffset, 2.2, Math.PI, Math.PI * 2);
+      ctx.stroke();
+
+      ctx.fillStyle = '#fdba74';
+      ctx.beginPath();
+      ctx.ellipse(ex, ey + 5 + bowOffset * 0.6, 6, 4.5, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.restore();
+    }
+
+    function drawVillagers(w, h, t) {
+      const helpers = [
+        { x: w * 0.20, y: h * 0.54, shirt: '#0284c7', hat: false, phase: 0.7 },
+        { x: w * 0.80, y: h * 0.54, shirt: '#15803d', hat: true, phase: 0 },
+        { x: w * 0.88, y: h * 0.58, shirt: '#b45309', hat: false, phase: 1.8 }
+      ];
+
+      helpers.forEach((p) => {
+        const bob = Math.sin(t * 4 + p.phase) * 2;
+        ctx.save();
+        ctx.fillStyle = '#292524';
+        ctx.fillRect(p.x - 6, p.y + 12, 5, 13);
+        ctx.fillRect(p.x + 1, p.y + 12, 5, 13);
+
+        ctx.fillStyle = p.shirt;
+        ctx.fillRect(p.x - 9, p.y - 4 + bob, 18, 17);
+
+        ctx.fillStyle = '#fed7aa';
+        ctx.beginPath();
+        ctx.arc(p.x, p.y - 12 + bob, 8, 0, Math.PI * 2);
+        ctx.fill();
+
+        if (p.hat) {
+          ctx.fillStyle = '#fde047';
+          ctx.strokeStyle = '#a16207';
+          ctx.lineWidth = 1.4;
+          ctx.beginPath();
+          ctx.moveTo(p.x - 14, p.y - 14 + bob);
+          ctx.lineTo(p.x, p.y - 25 + bob);
+          ctx.lineTo(p.x + 14, p.y - 14 + bob);
+          ctx.closePath();
+          ctx.fill();
+          ctx.stroke();
+        }
+        ctx.restore();
+      });
+    }
+
+    function updateAndDrawWalkers(dt, t) {
+      for (let i = walkers.length - 1; i >= 0; i--) {
+        const wk = walkers[i];
+        const speed = 75;
+
+        if (wk.state === 'walkIn') {
+          const dx = wk.targetX - wk.x;
+          if (Math.abs(dx) <= 3) {
+            wk.x = wk.targetX;
+            wk.state = 'stay';
+          } else {
+            wk.x += Math.sign(dx) * speed * dt;
+          }
+        } else if (wk.state === 'stay') {
+          wk.stayTimer -= dt;
+          if (wk.stayTimer <= 0) {
+            wk.state = 'walkOut';
+            wk.exitX = wk.x < viewW * 0.5 ? -45 : viewW + 45;
+          }
+        } else if (wk.state === 'walkOut') {
+          const dx = wk.exitX - wk.x;
+          wk.x += Math.sign(dx) * (speed * 1.15) * dt;
+          if (wk.x < -50 || wk.x > viewW + 50) {
+            walkers.splice(i, 1);
+            continue;
+          }
+        }
+
+        const stepBounce = wk.state === 'stay' ? Math.sin(t * 5 + wk.phase) * 1.5 : Math.abs(Math.sin(t * 11 + wk.phase)) * 3.5;
+
+        ctx.save();
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.25)';
+        ctx.beginPath();
+        ctx.ellipse(wk.x, wk.y + 24, 12, 4, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        const legSwing = wk.state === 'stay' ? 0 : Math.sin(t * 11 + wk.phase) * 4;
+        ctx.fillStyle = '#1c1917';
+        ctx.fillRect(wk.x - 6 + legSwing, wk.y + 10, 5, 13);
+        ctx.fillRect(wk.x + 1 - legSwing, wk.y + 10, 5, 13);
+
+        ctx.fillStyle = wk.color;
+        ctx.fillRect(wk.x - 9, wk.y - 6 - stepBounce, 18, 17);
+
+        ctx.fillStyle = '#fed7aa';
+        ctx.beginPath();
+        ctx.arc(wk.x, wk.y - 14 - stepBounce, 8.5, 0, Math.PI * 2);
+        ctx.fill();
+
+        const tag = wk.label ? `${wk.name} · ${wk.label}` : wk.name;
+        ctx.font = 'bold 10.5px sans-serif';
+        const textW = Math.min(170, ctx.measureText(tag).width + 14);
+        const boxX = wk.x - textW / 2;
+        const boxY = wk.y - 44 - stepBounce;
+
+        ctx.fillStyle = wk.isGift ? 'rgba(146, 64, 14, 0.92)' : 'rgba(28, 25, 23, 0.88)';
+        ctx.strokeStyle = wk.isGift ? '#fde047' : 'rgba(255, 255, 255, 0.45)';
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        ctx.roundRect(boxX, boxY, textW, 18, 7);
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.fillStyle = '#fffbeb';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(tag, wk.x, boxY + 9, textW - 8);
+        ctx.restore();
+      }
+    }
+
+    function updateAndDrawParticles(dt) {
+      ctx.save();
+      ctx.font = '18px sans-serif';
+      ctx.textAlign = 'center';
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
+        p.x += p.vx * dt;
+        p.y += p.vy * dt;
+        p.vy += 90 * dt;
+        p.life -= dt;
+        if (p.life <= 0) {
+          particles.splice(i, 1);
+          continue;
+        }
+        ctx.globalAlpha = Math.max(0, Math.min(1, p.life / p.maxLife));
+        ctx.fillText(p.symbol, p.x, p.y);
+      }
+      ctx.restore();
+    }
+
+    let lastFrameTime = performance.now();
+    function renderLoop(now) {
+      const dt = Math.min(0.05, (now - lastFrameTime) / 1000);
+      lastFrameTime = now;
+      animTime += dt;
+      if (elderThankTimer > 0) elderThankTimer -= dt;
+      if (houseSparkleTimer > 0) houseSparkleTimer -= dt;
+
+      const houseInfo = getHouseProgress();
+      ctx.clearRect(0, 0, viewW, viewH);
+      drawBackgroundScene(viewW, viewH, animTime);
+      drawCenterHouse(viewW, viewH, houseInfo.level);
+      drawVillagers(viewW, viewH, animTime);
+      drawElderOnMat(viewW, viewH, animTime);
+      updateAndDrawWalkers(dt, animTime);
+      updateAndDrawParticles(dt);
+
+      requestAnimationFrame(renderLoop);
+    }
+
+    /* =========================================================================
+       5. XỬ LÝ QUÀ TẶNG (1 QUÀ = 100 XÂY NHÀ), BÌNH LUẬN & DEMO
+       ========================================================================= */
+    function handleGiftEvent(userName, giftName, giftCountValue, giftIcon = '🎁') {
+      const cleanUser = sanitizeNoCoinWord(userName || 'Khán giả');
+      const cleanGift = sanitizeNoCoinWord(giftName || 'Quà tặng');
+      const rawQty = Math.max(1, Number(giftCountValue) || 1);
+      const addedBuildPoints = rawQty * CONVERSION_RATE;
+
+      const prevLevel = getHouseProgress().level;
+      state.buildScore += addedBuildPoints;
+      saveState();
+      updateHud();
+      const newLevel = getHouseProgress().level;
+
+      elderThankTimer = 2.6;
+      houseSparkleTimer = 1.6;
+      playGiftSound(rawQty >= 50);
+
+      pushFloatingAlert(`${giftIcon} ${cleanUser} tặng ${cleanGift} (+${formatNumber(addedBuildPoints)})`);
+      pushFeedMessage(cleanUser, `Tặng ${cleanGift} (+${formatNumber(addedBuildPoints)} xây nhà)`);
+      spawnVisitorWalker(cleanUser, `${giftIcon} +${formatNumber(addedBuildPoints)}`, true);
+      spawnCelebrationParticles(viewW * 0.5, viewH * 0.44, [giftIcon, '✨', '🧱', '💛']);
+
+      let thanksSpeech = `Lão cảm ơn ${cleanUser} đã tặng ${cleanGift}, giúp lão có thêm ${formatNumber(addedBuildPoints)} xây nhà!`;
+      if (newLevel > prevLevel) {
+        thanksSpeech += ` Ngôi nhà đã lên cấp ${newLevel} rồi!`;
+        pushFloatingAlert(`🎉 Chúc mừng! Ngôi nhà đã nâng lên Cấp ${newLevel}/5!`);
+      }
+      speakVietnamese(thanksSpeech);
+    }
+
+    function handleCommentEvent(userName, commentText) {
+      const cleanUser = sanitizeNoCoinWord(userName || 'Khán giả');
+      const cleanComment = sanitizeNoCoinWord(commentText || '');
+      if (!cleanComment) return;
+      pushFeedMessage(cleanUser, cleanComment);
+      spawnVisitorWalker(cleanUser, cleanComment.slice(0, 18), false);
+    }
+
+    function renderGiftStrip() {
+      const strip = document.getElementById('giftStrip');
+      strip.innerHTML = '';
+      state.gifts.forEach((g) => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'gift-card';
+        const cleanName = sanitizeNoCoinWord(g.name);
+        const val = Math.max(1, Number(g.value) || 1);
+        btn.innerHTML = `
+          <span class="gift-icon">${escapeHtml(g.icon || '🎁')}</span>
+          <span class="gift-name">${escapeHtml(cleanName)}</span>
+          <span class="gift-val">${formatNumber(val)}</span>
+        `;
+        btn.addEventListener('click', () => {
+          ensureAudioContext();
+          startBackgroundMusic();
+          const sampleNames = ['Minh Anh', 'Tuấn Kiệt', 'Lan Ngọc', 'Hoàng Nam', 'Thảo Vy', 'Quốc Bảo'];
+          const randomViewer = sampleNames[Math.floor(Math.random() * sampleNames.length)];
+          handleGiftEvent(randomViewer, cleanName, val, g.icon || '🎁');
+        });
+        strip.appendChild(btn);
+      });
+    }
+
+    let demoInterval = null;
+    const DEMO_VIEWERS = ['Ngọc Hân', 'Đức Huy', 'Bảo Trâm', 'Anh Quân', 'Khánh Linh', 'Gia Huy'];
+    const DEMO_COMMENTS = [
+      'Cố lên cụ ơi, cháu ủng hộ cụ xây nhà!',
+      'Chúc cụ luôn mạnh khỏe bình an ạ!',
+      'Góp chút gạch ngói giúp lão dựng mái nhà!',
+      'Sân làng yên bình quá!'
+    ];
+
+    function toggleDemoMode() {
+      const btn = document.getElementById('demoBtn');
+      if (demoInterval) {
+        clearInterval(demoInterval);
+        demoInterval = null;
+        btn.classList.remove('active');
+        btn.textContent = '▶ Demo';
+        pushFloatingAlert('Đã tạm dừng chạy thử Demo');
+        return;
+      }
+
+      ensureAudioContext();
+      startBackgroundMusic();
+      btn.classList.add('active');
+      btn.textContent = '⏹ Dừng Demo';
+      pushFloatingAlert('Bắt đầu chạy thử Demo tự động');
+
+      const triggerRandomDemo = () => {
+        const viewer = DEMO_VIEWERS[Math.floor(Math.random() * DEMO_VIEWERS.length)];
+        if (Math.random() < 0.72) {
+          const gift = state.gifts[Math.floor(Math.random() * state.gifts.length)];
+          handleGiftEvent(viewer, gift.name, gift.value, gift.icon);
+        } else {
+          const msg = DEMO_COMMENTS[Math.floor(Math.random() * DEMO_COMMENTS.length)];
+          handleCommentEvent(viewer, msg);
+        }
+      };
+
+      triggerRandomDemo();
+      demoInterval = setInterval(triggerRandomDemo, 3600);
+    }
+
+    /* =========================================================================
+       6. WEBSOCKET BRIDGE KHÔNG CHẶN REGEX CỨNG & BÁO LỖI THỰC TẾ
+       ========================================================================= */
+    let liveSocket = null;
+    let manualDisconnect = false;
+
+    function setLiveStatus(connected, text) {
+      const dot = document.getElementById('liveDot');
+      const mini = document.getElementById('liveStatusMini');
+      const logBox = document.getElementById('liveLogBox');
+      const cleanText = sanitizeNoCoinWord(text);
+
+      if (connected) {
+        dot.classList.add('connected');
+      } else {
+        dot.classList.remove('connected');
+      }
+      mini.textContent = cleanText;
+      if (logBox) {
+        logBox.innerHTML = `Trạng thái: <strong>${escapeHtml(cleanText)}</strong>`;
+      }
+    }
+
+    function normalizeBridgeUrl(rawInput) {
+      let cleaned = String(rawInput || '').trim().replace(/\s+/g, '');
+      if (!cleaned) {
+        cleaned = DEFAULT_BRIDGE_URL;
+      }
+      if (/^https:\/\//i.test(cleaned)) {
+        cleaned = 'wss://' + cleaned.slice(8);
+      } else if (/^http:\/\//i.test(cleaned)) {
+        cleaned = 'ws://' + cleaned.slice(7);
+      } else if (!/^wss?:\/\//i.test(cleaned)) {
+        cleaned = 'wss://' + cleaned;
+      }
+      cleaned = cleaned.replace(/\/+$/, '');
+      return cleaned;
+    }
+
+    function disconnectLive() {
+      manualDisconnect = true;
+      if (liveSocket) {
+        try {
+          liveSocket.close(1000, 'Người dùng ngắt kết nối');
+        } catch (e) {}
+        liveSocket = null;
+      }
+      setLiveStatus(false, 'Đã ngắt kết nối Bridge');
+    }
+
+    function connectToLiveBridge() {
+      const rawUrl = document.getElementById('bridgeUrlInput').value;
+      const finalUrl = normalizeBridgeUrl(rawUrl);
+      const rawId = document.getElementById('tiktokIdInput').value.trim().replace(/^@+/, '') || DEFAULT_TIKTOK_ID;
+
+      document.getElementById('bridgeUrlInput').value = finalUrl;
+      document.getElementById('tiktokIdInput').value = rawId;
+      state.bridgeUrl = finalUrl;
+      state.tiktokId = rawId;
+      saveState();
+
+      if (liveSocket) {
+        manualDisconnect = true;
+        try {
+          liveSocket.close();
+        } catch (e) {}
+        liveSocket = null;
+      }
+
+      manualDisconnect = false;
+      setLiveStatus(false, `Đang kết nối tới ${finalUrl}...`);
+
+      try {
+        const sep = finalUrl.includes('?') ? '&' : '?';
+        const wsEndpoint = `${finalUrl}${sep}uniqueId=${encodeURIComponent(rawId)}`;
+        const socket = new WebSocket(wsEndpoint);
+        liveSocket = socket;
+
+        socket.onopen = () => {
+          if (liveSocket !== socket) return;
+          setLiveStatus(true, `Đã kết nối Bridge, đang theo dõi @${rawId}`);
+          pushFloatingAlert(`🟢 Đã kết nối Bridge (@${rawId})`);
+          try {
+            socket.send(JSON.stringify({ uniqueId: rawId }));
+          } catch (sendErr) {
+            setLiveStatus(true, `Đã nối Bridge (@${rawId}), lỗi gửi lệnh: ${sendErr.message || sendErr}`);
+          }
+        };
+
+        socket.onmessage = (event) => {
+          if (liveSocket !== socket) return;
+          try {
+            const payload = JSON.parse(event.data);
+            if (payload.type === 'gift') {
+              const matched = state.gifts.find(
+                (g) => sanitizeNoCoinWord(g.name).toLowerCase() === sanitizeNoCoinWord(payload.giftName).toLowerCase()
+              );
+              const icon = matched ? matched.icon : '🎁';
+              handleGiftEvent(payload.user, payload.giftName, payload.coins || payload.count || 1, icon);
+            } else if (payload.type === 'comment') {
+              handleCommentEvent(payload.user, payload.comment);
+            } else if (payload.type === 'join') {
+              setLiveStatus(true, `Đã kết nối Bridge, đang theo dõi @${rawId}`);
+              pushFeedMessage(payload.user || `@${rawId}`, 'Đã kết nối luồng trực tiếp!');
+            } else if (payload.type === 'error') {
+              setLiveStatus(false, `Lỗi từ Bridge (@${rawId}): ${payload.message || 'Không rõ lỗi'}`);
+            }
+          } catch (parseErr) {
+            pushFeedMessage('Bridge', sanitizeNoCoinWord(String(event.data || '')));
+          }
+        };
+
+        socket.onerror = (errEvent) => {
+          if (liveSocket !== socket) return;
+          const reason = (errEvent && errEvent.message) ? errEvent.message : 'Không thể thiết lập luồng WebSocket tới máy chủ';
+          setLiveStatus(false, `Lỗi kết nối (${finalUrl}): ${reason}`);
+        };
+
+        socket.onclose = (closeEvent) => {
+          const code = closeEvent ? closeEvent.code : 0;
+          const reason = (closeEvent && closeEvent.reason) ? ` - ${closeEvent.reason}` : '';
+          if (liveSocket === socket) {
+            liveSocket = null;
+          }
+          if (!manualDisconnect) {
+            setLiveStatus(false, `Kết nối đóng (mã ${code}${reason}) · ${finalUrl}`);
+          }
+        };
+      } catch (openErr) {
+        setLiveStatus(false, `Không mở được WebSocket (${finalUrl}): ${openErr && openErr.message ? openErr.message : openErr}`);
+      }
+    }
+
+    /* =========================================================================
+       7. MODAL CÀI ĐẶT ("SỬA") & KHỞI TẠO
+       ========================================================================= */
+    function renderGiftEditList() {
+      const list = document.getElementById('giftEditList');
+      list.innerHTML = '';
+      state.gifts.forEach((g, idx) => {
+        const row = document.createElement('div');
+        row.className = 'gift-edit-row';
+        row.innerHTML = `
+          <input type="text" class="field-input edit-g-icon" value="${escapeHtml(g.icon || '🎁')}" />
+          <input type="text" class="field-input edit-g-name" value="${escapeHtml(sanitizeNoCoinWord(g.name))}" />
+          <input type="number" min="1" class="field-input edit-g-val" value="${Number(g.value) || 1}" />
+          <button type="button" class="del-gift-btn" title="Xóa">✕</button>
+        `;
+        row.querySelector('.del-gift-btn').addEventListener('click', () => {
+          if (state.gifts.length <= 1) return;
+          state.gifts.splice(idx, 1);
+          renderGiftEditList();
+        });
+        list.appendChild(row);
+      });
+    }
+
+    function openConfigModal() {
+      document.getElementById('bridgeUrlInput').value = state.bridgeUrl || DEFAULT_BRIDGE_URL;
+      document.getElementById('tiktokIdInput').value = state.tiktokId || DEFAULT_TIKTOK_ID;
+      document.getElementById('musicToggle').checked = state.musicEnabled;
+      document.getElementById('voiceToggle').checked = state.voiceEnabled;
+
+      for (let i = 0; i < 5; i++) {
+        document.getElementById(`tierInput${i}`).value = state.tiers[i];
+      }
+
+      renderGiftEditList();
+      document.getElementById('configModal').classList.remove('hidden');
+    }
+
+    function closeConfigModal() {
+      document.getElementById('configModal').classList.add('hidden');
+    }
+
+    function saveSettingsFromModal() {
+      const newTiers = [];
+      for (let i = 0; i < 5; i++) {
+        const val = Math.max(100, Number(document.getElementById(`tierInput${i}`).value) || DEFAULT_TIERS[i]);
+        newTiers.push(val);
+      }
+      newTiers.sort((a, b) => a - b);
+      state.tiers = newTiers;
+      state.musicEnabled = document.getElementById('musicToggle').checked;
+      state.voiceEnabled = document.getElementById('voiceToggle').checked;
+
+      const rows = document.querySelectorAll('#giftEditList .gift-edit-row');
+      const updatedGifts = [];
+      rows.forEach((row, idx) => {
+        const icon = row.querySelector('.edit-g-icon').value.trim() || '🎁';
+        const name = sanitizeNoCoinWord(row.querySelector('.edit-g-name').value.trim()) || `Quà ${idx + 1}`;
+        const value = Math.max(1, Number(row.querySelector('.edit-g-val').value) || 1);
+        updatedGifts.push({ id: `gift_${idx}_${Date.now()}`, icon, name, value });
+      });
+      if (updatedGifts.length > 0) {
+        state.gifts = updatedGifts;
+      }
+
+      saveState();
+      updateHud();
+      renderGiftStrip();
+      closeConfigModal();
+      pushFloatingAlert('✅ Đã lưu cài đặt quà & mốc');
+    }
+
+    document.getElementById('demoBtn').addEventListener('click', toggleDemoMode);
+
+    document.getElementById('audioBtn').addEventListener('click', () => {
+      state.audioEnabled = !state.audioEnabled;
+      const btn = document.getElementById('audioBtn');
+      if (state.audioEnabled) {
+        ensureAudioContext();
+        startBackgroundMusic();
+        btn.classList.remove('muted');
+        btn.textContent = '🔊 Âm thanh';
+      } else {
+        if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+        btn.classList.add('muted');
+        btn.textContent = '🔇 Tắt tiếng';
+      }
+    });
+
+    document.getElementById('editBtn').addEventListener('click', openConfigModal);
+    document.getElementById('closeModalBtn').addEventListener('click', closeConfigModal);
+
+    document.querySelectorAll('.tab-btn').forEach((tabBtn) => {
+      tabBtn.addEventListener('click', () => {
+        document.querySelectorAll('.tab-btn').forEach((b) => b.classList.remove('active'));
+        document.querySelectorAll('.tab-pane').forEach((p) => p.classList.add('hidden'));
+        tabBtn.classList.add('active');
+        document.getElementById(tabBtn.dataset.tab).classList.remove('hidden');
+      });
+    });
+
+    document.getElementById('connectLiveBtn').addEventListener('click', connectToLiveBridge);
+    document.getElementById('disconnectLiveBtn').addEventListener('click', disconnectLive);
+
+    document.getElementById('addGiftBtn').addEventListener('click', () => {
+      state.gifts.push({ id: `new_${Date.now()}`, icon: '🎁', name: 'Quà Mới', value: 10 });
+      renderGiftEditList();
+    });
+
+    document.getElementById('saveSettingsBtn').addEventListener('click', saveSettingsFromModal);
+
+    document.getElementById('resetProgressBtn').addEventListener('click', () => {
+      state.buildScore = 0;
+      saveState();
+      updateHud();
+      closeConfigModal();
+      pushFloatingAlert('🔄 Đã đặt lại tiến độ xây nhà về 0');
+    });
+
+    window.addEventListener('load', () => {
+      loadState();
+      resizeCanvas();
+      updateHud();
+      renderGiftStrip();
+      pushFeedMessage('Sân làng', 'Chạm vào quà bên dưới hoặc bấm Demo để xem thử!');
+      requestAnimationFrame(renderLoop);
+    });
+  </script>
+</body>
+</html>
